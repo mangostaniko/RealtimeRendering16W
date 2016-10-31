@@ -1,0 +1,9 @@
+#!/bin/bash
+
+rm -r ./build/*
+cd ./build
+cmake -H.. -B. # use .. as cmake source dir, but put cmake build files in build dir
+time make
+
+# for faster rebuild (if CMakeLists unchanged) just run make from build dir.
+# using nvidia graphics unit via bumblebee run from build dir as "primusrun ./SuzanneIsland"
