@@ -27,18 +27,18 @@ public:
 	SceneObject(const glm::mat4 &modelMatrix_);
 	virtual ~SceneObject();
 
-	
+
 	/**
 	 * @brief enum specifying matrix multiplication order
 	 */
-	enum Order 
+	enum Order
 	{
 		/**
 		* incoming matrix is positioned left of current matrix in multiplication:
 		* M_result = M_inc * M.
 		*/
-		LEFT, 
-		
+		LEFT,
+
 		/**
 		* incoming matrix is positioned right of current matrix in multiplication:
 		* M_result = M * M_inc.
@@ -125,7 +125,7 @@ public:
 	void translate(const glm::vec3 &t_, Order multOrder);
 
 	/**
-	 * @brief applies a scale operation to the current transformation 
+	 * @brief applies a scale operation to the current transformation
 	 * @param s scaling vector
 	 * @param multOrder order of multiplication
 	 */

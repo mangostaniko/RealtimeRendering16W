@@ -38,83 +38,81 @@ set(SRC_CLASSES
 
     src/main.cpp
 
-	src/shader.h
-	src/shader.cpp
-	src/texture.h
-	src/texture.cpp
-	src/textrenderer.h
-	src/textrenderer.cpp
+    src/shader.h
+    src/shader.cpp
+    src/texture.h
+    src/texture.cpp
+    src/textrenderer.h
+    src/textrenderer.cpp
 
-	src/sceneobject.h
-	src/sceneobject.cpp
-	src/camera.h
-	src/camera.cpp
-	src/light.h
-	src/light.cpp
-	src/geometry.h
-	src/geometry.cpp
-	src/surface.h
-	src/surface.cpp
+    src/sceneobject.h
+    src/sceneobject.cpp
+    src/camera.h
+    src/camera.cpp
+    src/light.h
+    src/light.cpp
+    src/geometry.h
+    src/geometry.cpp
+    src/surface.h
+    src/surface.cpp
 
-	src/player.h
-	src/player.cpp
-	src/eagle.h
-	src/eagle.cpp
+    src/eagle.h
+    src/eagle.cpp
 
-	src/effects/ssaopostprocessor.h
-	src/effects/ssaopostprocessor.cpp
-	src/effects/particlesystem.h
-	src/effects/particlesystem.cpp
+    src/effects/ssaopostprocessor.h
+    src/effects/ssaopostprocessor.cpp
+    src/effects/particlesystem.h
+    src/effects/particlesystem.cpp
 
     )
-	
+    
 # relative path to shader files
 set(SRC_SHADERS
-		src/shaders/textured_blinnphong.vert
-		src/shaders/textured_blinnphong.frag
-		src/shaders/normal_mapping.vert
-		src/shaders/normal_mapping.frag
+        src/shaders/textured_blinnphong.vert
+        src/shaders/textured_blinnphong.frag
+        src/shaders/normal_mapping.vert
+        src/shaders/normal_mapping.frag
 
-		src/shaders/text.vert
-		src/shaders/text.frag
-		src/shaders/particles.vert
-		src/shaders/particles.frag
+        src/shaders/text.vert
+        src/shaders/text.frag
+        src/shaders/particles.vert
+        src/shaders/particles.frag
 
-		src/shaders/depth_shader.vert
-		src/shaders/depth_shader.frag
-		src/shaders/depth_shader_vsm.vert
-		src/shaders/depth_shader_vsm.frag
-		src/shaders/quad_debug.vert
-		src/shaders/quad_debug.frag
+        src/shaders/depth_shader.vert
+        src/shaders/depth_shader.frag
+        src/shaders/depth_shader_vsm.vert
+        src/shaders/depth_shader_vsm.frag
+        src/shaders/quad_debug.vert
+        src/shaders/quad_debug.frag
 
-		src/shaders/ssao.vert
-		src/shaders/ssao.frag
-		src/shaders/blur.vert
-		src/shaders/blur.frag
-		src/shaders/blur_vsm.vert
-		src/shaders/blur_vsm.frag
+        src/shaders/ssao.vert
+        src/shaders/ssao.frag
+        src/shaders/blur.vert
+        src/shaders/blur.frag
+        src/shaders/blur_vsm.vert
+        src/shaders/blur_vsm.frag
 
-		)
-		
+        )
+        
 # adds an executable target with given name to be built from the source files listed afterwards
 add_executable(${PROJECT_NAME} ${SRC_CLASSES} ${SRC_SHADERS})
 
 
 ### INCLUDE HEADER FILES ###
 include_directories(${OPENGL_INCLUDE_DIRS} 
-					${GLEW_INCLUDE_DIRS} 
-					${GLFW_INCLUDE_DIRS}
-					${FreeImage_INCLUDE_DIR}
-					${ASSIMP_INCLUDE_DIRS}
+                    ${GLEW_INCLUDE_DIRS} 
+                    ${GLFW_INCLUDE_DIRS}
+                    ${FreeImage_INCLUDE_DIR}
+                    ${ASSIMP_INCLUDE_DIRS}
                     ${FREETYPE_INCLUDE_DIRS}
-			        )
-			        
+                    )
+                    
 ### LINK LIBRARIES ###
 target_link_libraries(${PROJECT_NAME}
-					  ${OPENGL_LIBRARIES}
-					  ${GLEW_LIBRARIES}
-					  ${GLFW_LIBRARIES}
-					  ${FreeImage_LIBRARIES}
-					  ${ASSIMP_LIBRARIES}
-					  ${FREETYPE_LIBRARIES}
-					  )
+                      ${OPENGL_LIBRARIES}
+                      ${GLEW_LIBRARIES}
+                      ${GLFW_LIBRARIES}
+                      ${FreeImage_LIBRARIES}
+                      ${ASSIMP_LIBRARIES}
+                      ${FREETYPE_LIBRARIES}
+                      )

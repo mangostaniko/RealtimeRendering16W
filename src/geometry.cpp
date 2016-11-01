@@ -9,7 +9,6 @@ Geometry::Geometry(const glm::mat4 &matrix_, const std::string &filePath)
     : SceneObject(matrix_)
 {
 	std::cout << "LOADING MODEL " << filePath << std::endl;
-
 	loadSurfaces(filePath);
 }
 

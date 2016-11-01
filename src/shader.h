@@ -16,33 +16,33 @@
 class Shader
 {
 
-	GLuint vertexHandle;
-	GLuint fragmentHandle;
+    GLuint vertexHandle;
+    GLuint fragmentHandle;
 
-	/**
-	 * @brief load and compile glsl shader
-	 * @param shader the glsl shader source file
-	 * @param shaderType the type of the shader
-	 * @param handle the id by which the shader is retrieved within the gl context
-	 */
-	void loadShader(const std::string& shader, GLenum shaderType, GLuint& handle);
+    /**
+     * @brief load and compile glsl shader
+     * @param shader the glsl shader source file
+     * @param shaderType the type of the shader
+     * @param handle the id by which the shader is retrieved within the gl context
+     */
+    void loadShader(const std::string& shader, GLenum shaderType, GLuint& handle);
 
-	/**
-	 * @brief link compiled shader objects into shader program object
-	 */
-	void linkShaders();
+    /**
+     * @brief link compiled shader objects into shader program object
+     */
+    void linkShaders();
 
 public:
-	Shader(const std::string& vertexShader, const std::string& fragmentShader);
-	~Shader();
+    Shader(const std::string& vertexShader, const std::string& fragmentShader);
+    ~Shader();
 
-	GLuint programHandle;
+    GLuint programHandle;
 
-	/**
-	 * @brief set this as the active shader program in the current opengl context
-	 * only one shader program be active at a time
-	 */
-	void useShader() const;
+    /**
+     * @brief set this as the active shader program in the current opengl context
+     * only one shader program be active at a time
+     */
+    void useShader() const;
 
 };
 

@@ -31,31 +31,31 @@ struct Glyph {
 
 class TextRenderer
 {
-	Shader *textShader;
-	GLuint vao, vbo;
+    Shader *textShader;
+    GLuint vao, vbo;
 
-	// stores preloaded glyphs for each character of 7-bit ASCII
-	std::map<GLchar, Glyph> glyphs;
+    // stores preloaded glyphs for each character of 7-bit ASCII
+    std::map<GLchar, Glyph> glyphs;
 
-	/**
-	 * @brief load FreeType glyphs for each character and create opengl textures from glyph bitmaps
-	 * the resulting Glyph structs (texture and glyph metrics) are stored in the glyphs map
-	 */
-	void loadGlyphs(const std::string &fontPath);	
+    /**
+     * @brief load FreeType glyphs for each character and create opengl textures from glyph bitmaps
+     * the resulting Glyph structs (texture and glyph metrics) are stored in the glyphs map
+     */
+    void loadGlyphs(const std::string &fontPath);    
 
 public:
-	TextRenderer(const std::string &fontPath, const GLuint &windowWidth, const GLuint &windowHeight);
-	~TextRenderer();
+    TextRenderer(const std::string &fontPath, const GLuint &windowWidth, const GLuint &windowHeight);
+    ~TextRenderer();
 
-	/**
-	 * @brief render the given text to the framebuffer
-	 * @param text the text string to render
-	 * @param x the horizontal position of the left side of the text
-	 * @param y the vertical position of the bottom side of the text
-	 * @param scaleFactor the factor by which the font is scaled
-	 * @param color the color to render the text with
-	 */
-	void renderText(const std::string &text, GLfloat x, GLfloat y, GLfloat scaleFactor, const glm::vec3 &color);
+    /**
+     * @brief render the given text to the framebuffer
+     * @param text the text string to render
+     * @param x the horizontal position of the left side of the text
+     * @param y the vertical position of the bottom side of the text
+     * @param scaleFactor the factor by which the font is scaled
+     * @param color the color to render the text with
+     */
+    void renderText(const std::string &text, GLfloat x, GLfloat y, GLfloat scaleFactor, const glm::vec3 &color);
 };
 
 #endif // TEXTRENDERER_H

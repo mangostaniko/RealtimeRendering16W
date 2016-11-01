@@ -21,13 +21,13 @@ uniform mat4 lightVP;
 
 void main()
 {
-	gl_Position = viewProjMat * modelMat * vec4(position, 1);
+    gl_Position = viewProjMat * modelMat * vec4(position, 1);
 
-	P = (modelMat * vec4(position, 1)).xyz;
-	N = normalMat * normal;
-	texCoord = uv;
+    P = (modelMat * vec4(position, 1)).xyz;
+    N = normalMat * normal;
+    texCoord = uv;
 
-	PLightSpace = lightVP * vec4(P, 1.0);
-	PViewSpace = viewMat * vec4(P, 1.0);
+    PLightSpace = lightVP * vec4(P, 1.0);
+    PViewSpace = viewMat * vec4(P, 1.0);
 
 }

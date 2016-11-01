@@ -10,5 +10,5 @@ uniform mat4 modelMat;
 void main()
 {
     gl_Position = lightVP * modelMat * vec4(position, 1.0f);
-	pos = gl_Position;
+    pos = gl_Position;
 }

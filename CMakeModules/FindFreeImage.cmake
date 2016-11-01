@@ -6,14 +6,14 @@
 
 # the include dir
 find_path(FreeImage_INCLUDE_DIR
-	NAMES FreeImage.h
-	HINTS $ENV{FREEIMAGE_ROOT}/include
+    NAMES FreeImage.h
+    HINTS $ENV{FREEIMAGE_ROOT}/include
 )
 
 # the library itself
 find_library(FreeImage_LIBRARY
-	NAMES freeimageplus
-	HINTS $ENV{FREEIMAGE_ROOT}/lib
+    NAMES freeimageplus
+    HINTS $ENV{FREEIMAGE_ROOT}/lib
 )
 
 if(FreeImage_INCLUDE_DIR)

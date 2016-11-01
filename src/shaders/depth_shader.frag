@@ -2,5 +2,5 @@
 
 void main()
 {
-	// leave Fragment Shader empty, no color buffer used
+    // leave Fragment Shader empty, no color buffer used
 }

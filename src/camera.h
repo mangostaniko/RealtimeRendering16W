@@ -3,24 +3,67 @@
 
 #define GLM_SWIZZLE
 
+#define ZOOM_MIN 30.0f
+#define ZOOM_MAX 80.0f
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include "sceneobject.h"
 
 #include <iostream>
 
 /**
  * @brief A Camera is a SceneObject that maintains a view matrix, as well as
- * parameters defining the projection matrix, i.e. the viewing frustum.
+ * parameters defining the projection matrix, i.e. the viewing frustum,
+ * as well as functions for input handling in different camera modes.
  */
 class Camera : public SceneObject
 {
+	GLFWwindow *window; // GLFW window for input handling
+
 	float fieldOfView;
 	float aspectRatio;
 	float nearPlane;
 	float farPlane;
 
+	enum CameraNavigationMode
+	{
+		FOLLOW_CURVE,
+		FREE_FLY
+	};
+
+	static CameraNavigationMode cameraNavMode;
+	CameraNavigationMode lastNavMode;
+	glm::mat4 lastCamTransform; // backup transformation matrix before changing camera mode
+
+	float timePassed = 0; // in seconds
+	static double scrollY; // amount scrolled since last frame
+
+	/**
+	 * @brief check if the camera navigation mode has changed and set camera accordingly
+	 * note: currently only works if there are only 2 nav modes
+	 */
+	void handleNavModeChange();
+
+	/**
+	 * @brief glfw callback on mouse scroll
+	 * @param window pointer to active window
+	 * @param deltaX the scroll delta on scroll axis X
+	 * @param deltaY the scroll delta on scroll axis Y
+	 */
+	static void onScroll(GLFWwindow *window, double deltaX, double deltaY);
+
+	/**
+	 * @brief handle input to control camera in free fly mode.
+	 * @param window pointer to active window
+	 * @param timeDelta the time passed since the last frame in seconds
+	 */
+	void handleInputFreeCamera(GLFWwindow *window, float timeDelta);
+
 public:
-	Camera(const glm::mat4 &matrix_, float fieldOfView_, float aspectRatio_, float nearPlane_, float farPlane_);
-	Camera(const glm::mat4 &matrix_);
+	Camera(GLFWwindow *window_, const glm::mat4 &matrix_, float fieldOfView_, float aspectRatio_, float nearPlane_, float farPlane_);
+	Camera(GLFWwindow *window_, const glm::mat4 &matrix_);
 	virtual ~Camera();
 
 	/**
@@ -34,14 +77,14 @@ public:
 	 * in which the camera is at the origin and looking in -z direction
 	 * @return the view matrix
 	 */
-	glm::mat4 getViewMatrix() const;
+	glm::mat4 getViewMat() const;
 
 	/**
 	 * @brief get the current projection matrix defining the view frustum
 	 * calculated from the parameters stored
 	 * @return the current projection matrix defining the view frustum
 	 */
-	glm::mat4 getProjectionMatrix() const;
+	glm::mat4 getProjMat() const;
 
 	/**
 	 * @brief get field of view of the viewing frustum
@@ -107,6 +150,12 @@ public:
 	 * @return whether the sphere lies completely within the view frustum
 	 */
 	bool checkSphereInFrustum(const glm::vec3 &sphereCenterWorldSpace, const glm::vec3 &sphereFarthestPointWorldSpace, const glm::mat4 &viewMat);
+
+	/**
+	 * @brief toggle the camera navigation mode
+	 */
+	void toggleNavMode();
+
 
 };
 

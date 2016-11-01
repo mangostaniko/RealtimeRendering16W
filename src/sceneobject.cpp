@@ -1,7 +1,7 @@
 #include "sceneobject.h"
 
 SceneObject::SceneObject(const glm::mat4 &modelMatrix_)
-	: modelMatrix(modelMatrix_)
+    : modelMatrix(modelMatrix_)
 {
 	inverseMatrix = glm::inverse(modelMatrix_);
 }
@@ -40,12 +40,12 @@ void SceneObject::setTransform(const glm::mat4 &matrix_) {
 void SceneObject::applyTransformation(const glm::mat4 &transform_, const glm::mat4 &inverse_, Order multOrder)
 {
 	if (multOrder == LEFT) {
-		modelMatrix		= transform_*modelMatrix;
-		inverseMatrix	= inverseMatrix*inverse_;
+		modelMatrix        = transform_*modelMatrix;
+		inverseMatrix    = inverseMatrix*inverse_;
 	}
 	else {
-		modelMatrix		= modelMatrix * transform_;
-		inverseMatrix	= inverse_*inverseMatrix;
+		modelMatrix        = modelMatrix * transform_;
+		inverseMatrix    = inverse_*inverseMatrix;
 	}
 }
 

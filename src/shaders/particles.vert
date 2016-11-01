@@ -13,6 +13,6 @@ uniform mat4 projMat;
 void main()
 {
     gl_Position = projMat * (modelViewMat * vec4(particleData.xyz, 1) + vec4(particleQuadVertex.xy*2, 0, 1)); // particles face camera
-	texCoord = particleQuadVertex.zw;
-	timeToLive = particleData.w;
+    texCoord = particleQuadVertex.zw;
+    timeToLive = particleData.w;
 }
