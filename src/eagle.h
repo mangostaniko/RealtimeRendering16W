@@ -1,11 +1,9 @@
-#ifndef EAGLE_H
-#define EAGLE_H
-
-#define GLM_SWIZZLE
-#define GLM_FORCE_RADIANS
+#ifndef SUZANNEISLAND_EAGLE_HPP
+#define SUZANNEISLAND_EAGLE_HPP
 
 #include <glm/gtx/vector_angle.hpp>
 #include "geometry.h"
+
 
 enum EagleState
 {
@@ -16,7 +14,6 @@ enum EagleState
 
 class Eagle : public Geometry
 {
-
     // GAMEPLAY
     // all durations given in seconds
 
@@ -35,7 +32,6 @@ class Eagle : public Geometry
     glm::vec3 targetPos;
     bool targetHidden = false;
     bool targetDefenseActive = false;
-
 
 public:
     Eagle(const glm::mat4 &matrix, const std::string &filePath);
@@ -62,8 +58,8 @@ public:
     bool isTargetEaten();
 
     void resetEagle();
-
 private:
 };
 
-#endif // EAGLE_H
+
+#endif // SUZANNEISLAND_EAGLE_HPP

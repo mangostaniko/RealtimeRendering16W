@@ -1,9 +1,8 @@
-#ifndef LIGHT_H
-#define LIGHT_H
-
-#define GLM_SWIZZLE
+#ifndef SUZANNEISLAND_LIGHT_HPP
+#define SUZANNEISLAND_LIGHT_HPP 1
 
 #include "sceneobject.h"
+
 
 /**
 * @brief The Light class. This stores the light Position and Color, in update method position and color change to simulate day time change
@@ -11,7 +10,6 @@
 class Light : public SceneObject
 {
 private: 
-
     // enum for the 4 sections of each day
     enum DayTime {
         MORNING = 0, AFTERNOON = 1, EVENING = 2, NIGHT = 3
@@ -33,7 +31,6 @@ private:
     const glm::vec3 nightColor;        // color of the night (dark grey)
 
 public:
-
     Light(const glm::mat4 &modelMatrix_, glm::vec3 endPos, glm::vec3 startCol, glm::vec3 endCol, float cycleDuration_);
 
     /**
@@ -47,7 +44,7 @@ public:
      *
      */
     glm::vec3 getColor() const;
-
 };
 
-#endif // LIGHT_H
+
+#endif // SUZANNEISLAND_LIGHT_HPP

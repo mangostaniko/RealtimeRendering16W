@@ -1,8 +1,6 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef SUZANNEISLAND_GEOMETRY_HPP
+#define SUZANNEISLAND_GEOMETRY_HPP 1
 
-#define GLM_FORCE_RADIANS
-#define GLM_SWIZZLE
 #include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
@@ -18,12 +16,12 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
+
 /**
  * @brief A Geometry is a SceneObject that holds Surfaces which contain mesh data and textures.
  */
 class Geometry : public SceneObject
 {
-
     // surfaces store mesh data and textures
     std::vector<std::shared_ptr<Surface>> surfaces;
 
@@ -101,7 +99,7 @@ public:
 
     // the number of surfaces being drawn
     static int drawnSurfaceCount;
-
 };
 
-#endif // GEOMETRY_H
+
+#endif // SUZANNEISLAND_GEOMETRY_HPP

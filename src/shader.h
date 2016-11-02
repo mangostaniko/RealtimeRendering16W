@@ -1,12 +1,13 @@
-#ifndef SHADER_H
-#define SHADER_H
-
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#ifndef SUZANNEISLAND_SHADER_HPP
+#define SUZANNEISLAND_SHADER_HPP 1
 
 #include <string>
 #include <iostream>
 #include <fstream>
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 
 /**
  * @brief Shader class.
@@ -15,7 +16,6 @@
  */
 class Shader
 {
-
     GLuint vertexHandle;
     GLuint fragmentHandle;
 
@@ -43,7 +43,7 @@ public:
      * only one shader program be active at a time
      */
     void useShader() const;
-
 };
 
-#endif // SHADER_H
+
+#endif // SUZANNEISLAND_SHADER_HPP

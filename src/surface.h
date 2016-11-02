@@ -1,15 +1,15 @@
-#ifndef SURFACE_H
-#define SURFACE_H
-
-#define GLM_FORCE_RADIANS
-#include <glm/gtc/type_ptr.hpp>
+#ifndef SUZANNEISLAND_SURFACE_HPP
+#define SUZANNEISLAND_SURFACE_HPP 1
 
 #include <vector>
 #include <memory>
 #include <stddef.h>
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "shader.h"
 #include "texture.h"
+
 
 /**
  * @brief Vertex struct for internal representation
@@ -90,4 +90,5 @@ private:
 
 };
 
-#endif // SURFACE_H
+
+#endif // SUZANNEISLAND_SURFACE_HPP

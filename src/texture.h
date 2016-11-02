@@ -1,12 +1,13 @@
-#ifndef TEXTURE_H
-#define TEXTURE_H
+#ifndef SUZANNEISLAND_TEXTURE_HPP
+#define SUZANNEISLAND_TEXTURE_HPP 1
+
+#include <iostream>
+#include <string>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <FreeImagePlus.h>
 
-#include <iostream>
-#include <string>
 
 /**
  * @brief Texture class.
@@ -15,7 +16,6 @@
  */
 class Texture
 {
-
     GLuint handle;
     const std::string filePath;
 
@@ -53,4 +53,5 @@ public:
     std::string getFilePath() const;
 };
 
-#endif // TEXTURE_H
+
+#endif // SUZANNEISLAND_TEXTURE_HPP

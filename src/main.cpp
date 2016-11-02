@@ -1,14 +1,3 @@
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_SWIZZLE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -16,6 +5,14 @@
 #include <memory>
 #include <random>
 #include <ctime>
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "shader.h"
 #include "sceneobject.h"
@@ -263,7 +260,7 @@ int main(int argc, char **argv)
         // draw shadow map for debugging (if enabled)
         debugShadowPass();
 
-		particleSystem->draw(camera->getViewMat(), camera->getProjMat(), glm::vec3(1, 0.55, 0.5));
+        particleSystem->draw(camera->getViewMat(), camera->getProjMat(), glm::vec3(1, 0.55, 0.5));
 
         drawText(deltaT, windowWidth, windowHeight);
 
@@ -329,8 +326,8 @@ void init(GLFWwindow *window)
     sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), LIGHT_END, glm::vec3(1.f, 0.89f, 0.6f), glm::vec3(0.87f, 0.53f, 0.f), dayLength);
     island = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "../data/models/island/island.dae");
 
-	// INIT CAMERA
-	camera = new Camera(window, cameraInitTransform, glm::radians(80.0f), width/(float)height, 0.2f, 200.0f); // mat, fov, aspect, znear, zfar
+    // INIT CAMERA
+    camera = new Camera(window, cameraInitTransform, glm::radians(80.0f), width/(float)height, 0.2f, 200.0f); // mat, fov, aspect, znear, zfar
 
     // INIT EAGLE
     eagle = new Eagle(eagleInitTransform, "../data/models/eagle/eagle.dae");
@@ -429,11 +426,11 @@ void initVSMBlur()
 
 void update(float timeDelta)
 {
-	camera->update(timeDelta);
+    camera->update(timeDelta);
 
-	eagle->update(timeDelta, camera->getLocation() + glm::vec3(0, 2, 0), true, false);
+    eagle->update(timeDelta, camera->getLocation() + glm::vec3(0, 2, 0), true, false);
 
-	particleSystem->update(timeDelta, camera->getViewMat());
+    particleSystem->update(timeDelta, camera->getViewMat());
 
     sun->update(timeDelta);
 
@@ -479,10 +476,10 @@ void drawScene()
     Geometry::drawnSurfaceCount = 0;
 
     glUniform1f(glGetUniformLocation(activeShader->programHandle, "material.shininess"), 64.f);
-	island->draw(activeShader, camera, false, filterType, camera->getViewMat());
+    island->draw(activeShader, camera, false, filterType, camera->getViewMat());
 
     glUniform1f(glGetUniformLocation(activeShader->programHandle, "material.shininess"), 32.f);
-	eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+    eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
 
     if (wireframeEnabled) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ); // disable wireframe
 
@@ -592,7 +589,7 @@ void ssaoFirstPass()
 
         //// SSAO PASS
         //// draw ssao output data to framebuffer texture
-		ssaoPostprocessor->calulateSSAOValues(camera->getProjMat());
+        ssaoPostprocessor->calulateSSAOValues(camera->getProjMat());
         setActiveShader(textureShader);
 
         //// SSAO BLUR PASS
@@ -648,8 +645,8 @@ void newGame()
 
     sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), LIGHT_END, glm::vec3(1.f, 0.89f, 0.6f), glm::vec3(0.87f, 0.53f, 0.f), dayLength);
 
-	// RESET CAMERA
-	camera->setTransform(cameraInitTransform);
+    // RESET CAMERA
+    camera->setTransform(cameraInitTransform);
     eagle->setTransform(eagleInitTransform);
     eagle->resetEagle();
 
@@ -670,7 +667,7 @@ void cleanup()
     delete particleSystem; particleSystem = nullptr;
     delete ssaoPostprocessor; ssaoPostprocessor = nullptr;
 
-	delete camera; camera = nullptr;
+    delete camera; camera = nullptr;
     delete eagle; eagle = nullptr;
     delete island; island = nullptr;
 
@@ -704,7 +701,7 @@ void frameBufferResize(GLFWwindow *window, int width, int height)
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
-		camera->toggleNavMode();
+        camera->toggleNavMode();
     }
 
     if (glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS){

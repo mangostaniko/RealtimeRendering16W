@@ -1,7 +1,6 @@
 #ifndef PARTICLESYSTEM_H
 #define PARTICLESYSTEM_H
 
-#define GLM_FORCE_RADIANS
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/norm.hpp>
 

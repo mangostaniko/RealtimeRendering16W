@@ -1,5 +1,5 @@
-#ifndef TEXTRENDERER_H
-#define TEXTRENDERER_H
+#ifndef SUZANNEISLAND_TEXTRENDERER_HPP
+#define SUZANNEISLAND_TEXTRENDERER_HPP 1
 
 #include <iostream>
 #include <string>
@@ -8,7 +8,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -19,6 +18,7 @@
 
 #include "shader.h"
 
+
 /**
  * @brief holds information defining the glyph (visual representation) of a character.
  */
@@ -28,6 +28,7 @@ struct Glyph {
     glm::ivec2 bearing;  // horizontal offset from origin to left of glyph / vertical from baseline to top of glyph (in pixels)
     GLuint advance;      // horizontal offset from current to next glyph origin (in 1/64th pixels)
 };
+
 
 class TextRenderer
 {
@@ -58,4 +59,4 @@ public:
     void renderText(const std::string &text, GLfloat x, GLfloat y, GLfloat scaleFactor, const glm::vec3 &color);
 };
 
-#endif // TEXTRENDERER_H
+#endif // SUZANNEISLAND_TEXTRENDERER_HPP
