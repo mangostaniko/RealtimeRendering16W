@@ -51,8 +51,8 @@ SSAOPostprocessor::SSAOPostprocessor(int windowWidth, int windowHeight, int samp
     /// other uniforms are passed to ssao shader each frame and are not included here.
     ////////////////////////////////////
 
-        ssaoShader = new Shader("../src/shaders/ssao.vert", "../src/shaders/ssao.frag");
-        blurShader = new Shader("../src/shaders/blur.vert", "../src/shaders/blur.frag");
+        ssaoShader = new Shader("shaders/ssao.vert", "shaders/ssao.frag");
+        blurShader = new Shader("shaders/blur.vert", "shaders/blur.frag");
 
     // create array of random vectors for depth sampling in ssao shader
     std::vector<glm::vec3> randomVectors;

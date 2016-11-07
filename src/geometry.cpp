@@ -1,5 +1,6 @@
 #include "geometry.h"
 
+
 int Geometry::drawnSurfaceCount = 0;
 std::vector<std::shared_ptr<Texture>> Geometry::loadedTextures = {};
 glm::vec3 boundingBoxMin;
@@ -8,34 +9,30 @@ glm::vec3 boundingBoxMax;
 Geometry::Geometry(const glm::mat4 &matrix_, const std::string &filePath)
     : SceneObject(matrix_)
 {
-	std::cout << "LOADING MODEL " << filePath << std::endl;
-	loadSurfaces(filePath);
+    std::cout << "LOADING MODEL " << filePath << std::endl;
+    loadSurfaces(filePath);
 }
 
 Geometry::~Geometry()
-{
-
-}
+{}
 
 glm::mat3 Geometry::getNormalMatrix() const
 {
-	return glm::transpose(glm::mat3(getInverseMatrix()));
+    return glm::transpose(glm::mat3(getInverseMatrix()));
 }
 
 glm::vec3 Geometry::getBBMin()
 {
-	return boundingBoxMin;
+    return boundingBoxMin;
 }
 
 glm::vec3 Geometry::getBBMax()
 {
-	return boundingBoxMax;
+    return boundingBoxMax;
 }
 
 void Geometry::update(float timeDelta)
-{
-
-}
+{}
 
 void Geometry::draw(Shader *shader, Camera *camera, bool useFrustumCulling, Texture::FilterType filterType, const glm::mat4 &viewMat)
 {
@@ -52,22 +49,20 @@ void Geometry::draw(Shader *shader, Camera *camera, bool useFrustumCulling, Text
 
         // view frustum culling using bounding spheres
         if (useFrustumCulling) {
-			glm::vec3 boundingSphereCenter = (getMatrix() * glm::vec4(surfaces[i]->getBoundingSphereCenter(), 1)).xyz;
-			glm::vec3 boundingSphereFarthestPoint = (getMatrix() * glm::vec4(surfaces[i]->getBoundingSphereFarthestPoint(), 1)).xyz;
+            glm::vec3 boundingSphereCenter = (getMatrix() * glm::vec4(surfaces[i]->getBoundingSphereCenter(), 1)).xyz;
+            glm::vec3 boundingSphereFarthestPoint = (getMatrix() * glm::vec4(surfaces[i]->getBoundingSphereFarthestPoint(), 1)).xyz;
 
-            if (!camera->checkSphereInFrustum(boundingSphereCenter, boundingSphereFarthestPoint, viewMat))
+            if (!camera->checkSphereInFrustum(boundingSphereCenter, boundingSphereFarthestPoint, viewMat)) {
                 continue;
+            }
         }
-
         drawnSurfaceCount += 1;
         surfaces[i]->draw(shader, filterType);
     }
-
 }
 
 void Geometry::loadSurfaces(const std::string &filePath)
 {
-
     // read surface data from file using Assimp.
     //
     // IMPORTANT ASSIMP POSTPROCESS FLAGS
@@ -91,8 +86,8 @@ void Geometry::loadSurfaces(const std::string &filePath)
     // recursively process Assimp root node
     processNode(scene->mRootNode, scene);
 
-	std::cout << "loaded " << surfaces.size() << " surfaces." << std::endl;
-	std::cout << "loaded " << loadedTextures.size() << " textures." << std::endl;
+    std::cout << "loaded " << surfaces.size() << " surfaces." << std::endl;
+    std::cout << "loaded " << loadedTextures.size() << " textures." << std::endl;
 }
 
 void Geometry::processNode(aiNode *node, const aiScene *scene)
@@ -148,11 +143,13 @@ void Geometry::processMesh(aiMesh *mesh, const aiScene *scene)
             vertex.uv = glm::vec2(0.0f, 0.0f);
         }
 
-		// update axis aligned bounding box
-		if (glm::all(glm::lessThan(vertex.position, boundingBoxMin)))
-			boundingBoxMin = vertex.position;
-		else if (glm::all(glm::greaterThan(vertex.position, boundingBoxMax)))
-			boundingBoxMax = vertex.position;
+        // update axis aligned bounding box
+        if (glm::all(glm::lessThan(vertex.position, boundingBoxMin))) {
+            boundingBoxMin = vertex.position;
+        }
+        else if (glm::all(glm::greaterThan(vertex.position, boundingBoxMax))) {
+            boundingBoxMax = vertex.position;
+        }
 
         vertices.push_back(vertex);
     }

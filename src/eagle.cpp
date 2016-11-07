@@ -1,5 +1,6 @@
 #include "eagle.h"
 
+
 Eagle::Eagle(const glm::mat4 &matrix, const std::string &filePath)
     : Geometry(matrix, filePath)
 {
@@ -7,9 +8,7 @@ Eagle::Eagle(const glm::mat4 &matrix, const std::string &filePath)
 }
 
 Eagle::~Eagle()
-{
-
-}
+{}
 
 void Eagle::update(float timeDelta, const glm::vec3 &targetPos_, bool targetHidden_, bool targetDefenseActive_)
 {
@@ -104,4 +103,3 @@ void Eagle::resetEagle()
     targetHidden = false;
     targetDefenseActive = false;
 }
-

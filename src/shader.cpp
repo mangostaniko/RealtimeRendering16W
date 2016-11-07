@@ -1,10 +1,10 @@
 #include "shader.h"
 
-Shader::Shader(const std::string &vertexShader, const std::string &fragmentShader)
-    : vertexHandle(0)
-    , fragmentHandle(0)
-    , programHandle(0)
 
+Shader::Shader(const std::string &vertexShader, const std::string &fragmentShader)
+    : programHandle(0)
+    , vertexHandle(0)
+    , fragmentHandle(0)
 {
     programHandle = glCreateProgram();
 
@@ -13,12 +13,10 @@ Shader::Shader(const std::string &vertexShader, const std::string &fragmentShade
         exit(EXIT_FAILURE);
     }
 
-
     loadShader(vertexShader, GL_VERTEX_SHADER, vertexHandle);
     loadShader(fragmentShader, GL_FRAGMENT_SHADER, fragmentHandle);
 
     linkShaders();
-
 }
 
 Shader::~Shader()
@@ -37,8 +35,9 @@ void Shader::loadShader(const std::string &shader, GLenum shaderType, GLuint &ha
         exit(EXIT_FAILURE);
     }
 
-    std::string shaderSource = std::string(std::istreambuf_iterator<char>(shaderFile),
-                                           std::istreambuf_iterator<char>());
+    std::string shaderSource = std::string(
+        std::istreambuf_iterator<char>(shaderFile),
+        std::istreambuf_iterator<char>());
     shaderFile.close();
 
     handle = glCreateShader(shaderType);
@@ -54,7 +53,8 @@ void Shader::loadShader(const std::string &shader, GLenum shaderType, GLuint &ha
 
     // print log on failure
     GLint succeeded;
-    glGetShaderiv(handle, GL_COMPILE_STATUS, &succeeded); // get int vector (iv) of parameters from shader object
+    // get int vector (iv) of parameters from shader object
+    glGetShaderiv(handle, GL_COMPILE_STATUS, &succeeded);
     if (!succeeded) {
         GLint logSize;
         glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &logSize);
@@ -67,8 +67,6 @@ void Shader::loadShader(const std::string &shader, GLenum shaderType, GLuint &ha
 
         exit(EXIT_FAILURE);
     }
-
-
 }
 
 void Shader::useShader() const

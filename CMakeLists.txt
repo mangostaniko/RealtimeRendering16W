@@ -8,10 +8,6 @@ set(CMAKE_MODULE_PATH
     "${CMAKE_SOURCE_DIR}/cmake"
 )
 
-# specify build dir for out-of-source build (aka shadow build)
-set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-
 
 ### COMPILER FLAGS ###
 # note: add_definitions can be used as well, but is intended for preprocessor definitions
@@ -59,8 +55,8 @@ SET(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README)
 
 ## Setting package description
 SET(
-	CPACK_PACKAGE_DESCRIPTION
-	"An island of Real-time rendering effects!"
+    CPACK_PACKAGE_DESCRIPTION
+    "An island of Real-time rendering effects!"
 )
 
 ADD_SUBDIRECTORY(docs)

@@ -9,40 +9,36 @@
 #include <GLFW/glfw3.h>
 
 
-/**
- * @brief Shader class.
- * This loads and compiles glsl shader files and creates a linked shader program.
- * The program can later be activated when needed.
- */
+//! Shader class.
+
+//! This loads and compiles glsl shader files and creates a linked shader
+//! program. The program can later be activated when needed.
 class Shader
 {
-    GLuint vertexHandle;
-    GLuint fragmentHandle;
-
-    /**
-     * @brief load and compile glsl shader
-     * @param shader the glsl shader source file
-     * @param shaderType the type of the shader
-     * @param handle the id by which the shader is retrieved within the gl context
-     */
-    void loadShader(const std::string& shader, GLenum shaderType, GLuint& handle);
-
-    /**
-     * @brief link compiled shader objects into shader program object
-     */
-    void linkShaders();
-
 public:
     Shader(const std::string& vertexShader, const std::string& fragmentShader);
     ~Shader();
 
     GLuint programHandle;
 
-    /**
-     * @brief set this as the active shader program in the current opengl context
-     * only one shader program be active at a time
-     */
+    //! Set this as the active shader program.
+
+    //! Only one shader program can be active at a time in the current opengl
+    //! context.
     void useShader() const;
+private:
+    GLuint vertexHandle;
+    GLuint fragmentHandle;
+
+    //! load and compile glsl shader
+    void loadShader(
+        const std::string& shader, //!< [in] the glsl shader source file
+        GLenum shaderType, //!< [in] the type of glsl shader
+        GLuint& handle //!< [in,out] the gl context shader id used for retrieval
+    );
+
+    //! link compiled shader objects into shader program object
+    void linkShaders();
 };
 
 

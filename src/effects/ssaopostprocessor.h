@@ -1,17 +1,17 @@
-#ifndef SSAOPOSTPROCESSOR_H
-#define SSAOPOSTPROCESSOR_H
-
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#ifndef SSAOPOSTPROCESSOR_HPP
+#define SSAOPOSTPROCESSOR_HPP 1
 
 #include <string>
 #include <vector>
 #include <iostream>
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "../shader.h"
+
 
 /**
  * @brief The SSAOPostprocessor class facilitates Screen Space Ambient Occlusion
@@ -21,7 +21,6 @@
  */
 class SSAOPostprocessor
 {
-
     GLuint fboScreenData, screenColorTexture, viewPosTexture, screenDepthBuffer;
     GLuint fboSSAO, ssaoTexture;
     GLuint fboSSAOBlurPingpong, ssaoBlurredTexturePingpong;
@@ -76,4 +75,5 @@ public:
 private:
 };
 
-#endif // SSAOPOSTPROCESSOR_H
+
+#endif // SSAOPOSTPROCESSOR_HPP

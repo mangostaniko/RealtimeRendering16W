@@ -1,16 +1,17 @@
-#ifndef PARTICLESYSTEM_H
-#define PARTICLESYSTEM_H
-
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/norm.hpp>
+#ifndef SUZANNEISLAND_EFFECTS_PARTICLESYSTEM_HPP
+#define SUZANNEISLAND_EFFECTS_PARTICLESYSTEM_HPP 1
 
 #include <vector>
 #include <memory>
 #include <algorithm>
 
-#include "../sceneobject.h"
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/norm.hpp>
+
+#include "../sceneobject.hpp"
 #include "../shader.h"
-#include "../texture.h"
+#include "../texture.hpp"
+
 
 struct Particle
 {
@@ -25,11 +26,28 @@ struct Particle
     {
         return this->viewDepth > other.viewDepth;
     }
-
 };
+
 
 class ParticleSystem : SceneObject
 {
+public:
+    ParticleSystem(const glm::mat4 &matrix_, const std::string &texturePath, int maxParticleCount_, float spawnRate_, float timeToLive_, float gravity_);
+    ~ParticleSystem();
+
+    //! Update the particles in the particle system
+    void update(
+        float timeDelta, //!< [in] the time since the last frame in seconds
+        const glm::mat4 &viewMat
+    );
+
+    //! Draw the particles in the particle system
+    void draw(const glm::mat4 &viewMat, const glm::mat4 &projMat, const glm::vec3 &color);
+
+    //! Clear all particles and reinitiate spawning
+    void respawn(glm::vec3 location);
+
+private:
     GLuint vao;
     GLuint particleQuadVBO;
     GLuint particleInstanceDataVBO;
@@ -37,43 +55,19 @@ class ParticleSystem : SceneObject
     Shader *particleShader = nullptr;
     Texture *particleTexture = nullptr;
 
-    unsigned int maxParticleCount = 1000;  // maximum total particle count
+    unsigned int maxParticleCount = 1000; // maximum total particle count
     bool spawningPaused = true;
-    float spawnRate = 200.0f;              // how many particles to spawn per second
-    float secondsSinceLastSpawn = -1.0f;   // time since last spawned particle, in seconds
-    float timeToLive = 10.0f;              // time in seconds until particle disappears
-    float gravity = 0.1f;                  // factor for gravitational acceleration
+    float spawnRate = 200.0f;             // how many particles to spawn per second
+    float secondsSinceLastSpawn = -1.0f;  // time since last spawned particle, in seconds
+    float timeToLive = 10.0f;             // time in seconds until particle disappears
+    float gravity = 0.1f;                 // factor for gravitational acceleration
 
     std::vector<std::shared_ptr<Particle>> particles;
 
-public:
-
-    ParticleSystem(const glm::mat4 &matrix_, const std::string &texturePath, int maxParticleCount_, float spawnRate_, float timeToLive_, float gravity_);
-    ~ParticleSystem();
-
-    /**
-     * @brief update the particles in the particle system
-     * @param timeDelta the time since the last frame
-     */
-    void update(float timeDelta, const glm::mat4 &viewMat);
-
-    /**
-     * @brief draw the particles in the particle system
-     */
-    void draw(const glm::mat4 &viewMat, const glm::mat4 &projMat, const glm::vec3 &color);
-
-    /**
-     * @brief clear all particles and reinitiate spawning
-     */
-    void respawn(glm::vec3 location);
-
-private:
-
-    /**
-     * @brief return a pseudorandom float in range [0, 1]
-     * @return pseudorandom float in range [0, 1]
-     */
+    //! Returns a pseudorandom float in range [0, 1]
+    /// \return pseudorandom float in range [0, 1]
     float randomFloat();
 };
 
-#endif // PARTICLESYSTEM_H
+
+#endif // SUZANNEISLAND_EFFECTS_PARTICLESYSTEM_HPP

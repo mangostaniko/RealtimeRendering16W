@@ -30,7 +30,7 @@ ParticleSystem::ParticleSystem(const glm::mat4 &matrix_, const std::string &text
     , gravity(gravity_)
 {
 
-        particleShader = new Shader("../src/shaders/particles.vert", "../src/shaders/particles.frag");
+        particleShader = new Shader("shaders/particles.vert", "shaders/particles.frag");
     particleTexture = new Texture(texturePath, true);
     std::cout << "loaded texture: " << texturePath << std::endl;
 

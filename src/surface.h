@@ -8,12 +8,10 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader.h"
-#include "texture.h"
+#include "texture.hpp"
 
 
-/**
- * @brief Vertex struct for internal representation
- */
+//! Vertex struct for internal representation
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
@@ -81,13 +79,11 @@ public:
     glm::vec3 getBoundingSphereFarthestPoint();
 
 private:
-
     /**
      * @brief calculate parameters defining a bounding sphere
      * for this surface to be used in view frustum culling
      */
     void calculateBoundingSphere();
-
 };
 
 

@@ -15,7 +15,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader.h"
-#include "sceneobject.h"
+#include "sceneobject.hpp"
 #include "camera.h"
 #include "eagle.h"
 #include "light.h"
@@ -307,16 +307,16 @@ void init(GLFWwindow *window)
     paused = false;
 
     // INIT TEXT RENDERER
-    textRenderer = new TextRenderer("../data/fonts/cliff.ttf", width, height);
+    textRenderer = new TextRenderer("data/fonts/cliff.ttf", width, height);
 
     // INIT PARTICLE SYSTEM
-    particleSystem = new ParticleSystem(glm::mat4(1.0f), "../data/models/skunk/smoke.png", 30, 100.f, 15.f, -0.05f);
+    particleSystem = new ParticleSystem(glm::mat4(1.0f), "data/models/skunk/smoke.png", 30, 100.f, 15.f, -0.05f);
 
     // INIT SSAO POST PROCESSOR
     ssaoPostprocessor = new SSAOPostprocessor(width, height, 32);
 
     // INIT SHADERS
-    textureShader = new Shader("../src/shaders/textured_blinnphong.vert", "../src/shaders/textured_blinnphong.frag");
+    textureShader = new Shader("shaders/textured_blinnphong.vert", "shaders/textured_blinnphong.frag");
     setActiveShader(textureShader); // non-trivial cost
 
     // NOTE: the following initializations are intended to be used with a shader of the structure like textureShader
@@ -324,13 +324,13 @@ void init(GLFWwindow *window)
 
     // INIT WORLD + OBJECTS
     sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), LIGHT_END, glm::vec3(1.f, 0.89f, 0.6f), glm::vec3(0.87f, 0.53f, 0.f), dayLength);
-    island = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "../data/models/island/island.dae");
+    island = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/island/island.dae");
 
     // INIT CAMERA
     camera = new Camera(window, cameraInitTransform, glm::radians(80.0f), width/(float)height, 0.2f, 200.0f); // mat, fov, aspect, znear, zfar
 
     // INIT EAGLE
-    eagle = new Eagle(eagleInitTransform, "../data/models/eagle/eagle.dae");
+    eagle = new Eagle(eagleInitTransform, "data/models/eagle/eagle.dae");
 
     printf("FINISHED MODEL LOADING\n");
 
@@ -341,10 +341,10 @@ void init(GLFWwindow *window)
 void initSM()
 {
     // SM Shaders
-    depthMapShader = new Shader("../src/shaders/depth_shader.vert", "../src/shaders/depth_shader.frag");
-    debugDepthShader = new Shader("../src/shaders/quad_debug.vert", "../src/shaders/quad_debug.frag");
-    vsmDepthMapShader = new Shader("../src/shaders/depth_shader_vsm.vert", "../src/shaders/depth_shader_vsm.frag");
-    blurVSMDepthShader = new Shader("../src/shaders/blur_vsm.vert", "../src/shaders/blur_vsm.frag");
+    depthMapShader = new Shader("shaders/depth_shader.vert", "shaders/depth_shader.frag");
+    debugDepthShader = new Shader("shaders/quad_debug.vert", "shaders/quad_debug.frag");
+    vsmDepthMapShader = new Shader("shaders/depth_shader_vsm.vert", "shaders/depth_shader_vsm.frag");
+    blurVSMDepthShader = new Shader("shaders/blur_vsm.vert", "shaders/blur_vsm.frag");
 
     initVSM();
     //initPCFSM();
@@ -448,13 +448,15 @@ void update(float timeDelta)
     glUniform3f(lightAmbientLocation, sun->getColor().x * 0.3f, sun->getColor().y * 0.3f, sun->getColor().z * 0.3f);
     glUniform3f(lightDiffuseLocation, sun->getColor().x, sun->getColor().y, sun->getColor().z);
     glUniform3f(lightSpecularLocation, sun->getColor().x * 0.8f, sun->getColor().y * 0.8f, sun->getColor().z * 0.8f);
-
 }
 
 
 void drawScene()
 {
-    if (wireframeEnabled) glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ); // enable wireframe
+    if (wireframeEnabled) {
+        // enable wireframe
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
 
     if (useAlpha) {
         glUniform1f(glGetUniformLocation(activeShader->programHandle, "useAlpha"), true);
@@ -481,8 +483,10 @@ void drawScene()
     glUniform1f(glGetUniformLocation(activeShader->programHandle, "material.shininess"), 32.f);
     eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
 
-    if (wireframeEnabled) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ); // disable wireframe
-
+    if (wireframeEnabled) {
+        // disable wireframe
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 }
 
 
@@ -633,7 +637,6 @@ void debugShadowPass()
     }
 }
 
-
 void newGame()
 {
     delete sun;
@@ -670,7 +673,6 @@ void cleanup()
     delete camera; camera = nullptr;
     delete eagle; eagle = nullptr;
     delete island; island = nullptr;
-
 }
 
 
@@ -704,33 +706,53 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
         camera->toggleNavMode();
     }
 
-    if (glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS){
+    if (glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS) {
         newGame();
         std::cout << "GAME RESTARTED" << std::endl;
     }
 
     if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
         debugInfoEnabled = !debugInfoEnabled;
-        if (debugInfoEnabled) std::cout << "DEBUG INFO ENABLED" << std::endl;
-        else std::cout << "DEBUG INFO DISABLED" << std::endl;
+        if (debugInfoEnabled) {
+            std::cout << "DEBUG INFO ENABLED" << std::endl;
+        }
+        else {
+            std::cout << "DEBUG INFO DISABLED" << std::endl;
+        }
     }
 
     if (glfwGetKey(window, GLFW_KEY_F3) == GLFW_PRESS) {
         wireframeEnabled = !wireframeEnabled;
-        if (wireframeEnabled) std::cout << "DRAW WIREFRAME ENABLED" << std::endl;
-        else std::cout << "DRAW WIREFRAME DISABLED" << std::endl;
+        if (wireframeEnabled) {
+            std::cout << "DRAW WIREFRAME ENABLED" << std::endl;
+        }
+        else {
+            std::cout << "DRAW WIREFRAME DISABLED" << std::endl;
+        }
     }
 
     if (glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS) {
         filterType = static_cast<Texture::FilterType>((static_cast<int>(filterType)+3) % 6);
 
         switch (filterType) {
-            case Texture::NEAREST_MIPMAP_OFF:     std::cout << "TEXTURE FILTER NEAREST" << std::endl; break;
-            case Texture::NEAREST_MIPMAP_NEAREST: std::cout << "TEXTURE FILTER NEAREST" << std::endl; break;
-            case Texture::NEAREST_MIPMAP_LINEAR:  std::cout << "TEXTURE FILTER NEAREST" << std::endl; break;
-            case Texture::LINEAR_MIPMAP_OFF:      std::cout << "TEXTURE FILTER LINEAR" << std::endl; break;
-            case Texture::LINEAR_MIPMAP_NEAREST:  std::cout << "TEXTURE FILTER LINEAR" << std::endl; break;
-            case Texture::LINEAR_MIPMAP_LINEAR:   std::cout << "TEXTURE FILTER LINEAR" << std::endl; break;
+            case Texture::NEAREST_MIPMAP_OFF:
+                std::cout << "TEXTURE FILTER NEAREST" << std::endl;
+                break;
+            case Texture::NEAREST_MIPMAP_NEAREST:
+                std::cout << "TEXTURE FILTER NEAREST" << std::endl;
+                break;
+            case Texture::NEAREST_MIPMAP_LINEAR:
+                std::cout << "TEXTURE FILTER NEAREST" << std::endl;
+                break;
+            case Texture::LINEAR_MIPMAP_OFF:
+                std::cout << "TEXTURE FILTER LINEAR" << std::endl;
+                break;
+            case Texture::LINEAR_MIPMAP_NEAREST:
+                std::cout << "TEXTURE FILTER LINEAR" << std::endl;
+                break;
+            case Texture::LINEAR_MIPMAP_LINEAR:
+                std::cout << "TEXTURE FILTER LINEAR" << std::endl;
+                break;
         }
     }
 
@@ -739,19 +761,35 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
         filterType = static_cast<Texture::FilterType>((static_cast<int>(filterType)+1) % 3 + (filterTypeInt/3)*3);
 
         switch (filterType) {
-            case Texture::NEAREST_MIPMAP_OFF:     std::cout << "MIPMAP OFF" << std::endl; break;
-            case Texture::NEAREST_MIPMAP_NEAREST: std::cout << "MIPMAP FILTER NEAREST" << std::endl; break;
-            case Texture::NEAREST_MIPMAP_LINEAR:  std::cout << "MIPMAP FILTER LINEAR" << std::endl; break;
-            case Texture::LINEAR_MIPMAP_OFF:      std::cout << "MIPMAP OFF" << std::endl; break;
-            case Texture::LINEAR_MIPMAP_NEAREST:  std::cout << "MIPMAP FILTER NEAREST" << std::endl; break;
-            case Texture::LINEAR_MIPMAP_LINEAR:   std::cout << "MIPMAP FILTER LINEAR" << std::endl; break;
+            case Texture::NEAREST_MIPMAP_OFF:
+                std::cout << "MIPMAP OFF" << std::endl;
+                break;
+            case Texture::NEAREST_MIPMAP_NEAREST:
+                std::cout << "MIPMAP FILTER NEAREST" << std::endl;
+                break;
+            case Texture::NEAREST_MIPMAP_LINEAR:
+                std::cout << "MIPMAP FILTER LINEAR" << std::endl;
+                break;
+            case Texture::LINEAR_MIPMAP_OFF:
+                std::cout << "MIPMAP OFF" << std::endl;
+                break;
+            case Texture::LINEAR_MIPMAP_NEAREST:
+                std::cout << "MIPMAP FILTER NEAREST" << std::endl;
+                break;
+            case Texture::LINEAR_MIPMAP_LINEAR:
+                std::cout << "MIPMAP FILTER LINEAR" << std::endl;
+                break;
         }
     }
 
     if (glfwGetKey(window, GLFW_KEY_F6) == GLFW_PRESS) {
         ssaoEnabled = !ssaoEnabled;
-        if (ssaoEnabled) std::cout << "SSAO ENABLED" << std::endl;
-        else std::cout << "SSAO DISABLED" << std::endl;
+        if (ssaoEnabled) {
+            std::cout << "SSAO ENABLED" << std::endl;
+        }
+        else {
+            std::cout << "SSAO DISABLED" << std::endl;
+        }
     }
 
     if (glfwGetKey(window, GLFW_KEY_F7) == GLFW_PRESS) {
@@ -774,23 +812,34 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
     if (glfwGetKey(window, GLFW_KEY_F8) == GLFW_PRESS) {
         frustumCullingEnabled = !frustumCullingEnabled;
-        if (frustumCullingEnabled) std::cout << "VIEW FRUSTUM CULLING ENABLED" << std::endl;
-        else std::cout << "VIEW FRUSTUM CULLING DISABLED" << std::endl;
+        if (frustumCullingEnabled) {
+            std::cout << "VIEW FRUSTUM CULLING ENABLED" << std::endl;
+        }
+        else {
+            std::cout << "VIEW FRUSTUM CULLING DISABLED" << std::endl;
+        }
     }
 
     if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_PRESS) {
         useAlpha = !useAlpha;
-        if (useAlpha) std::cout << "TRANSPARENCY ENABLED" << std::endl;
-        else std::cout << "TRANSPARENCY DISABLED" << std::endl;
+        if (useAlpha) {
+            std::cout << "TRANSPARENCY ENABLED" << std::endl;
+        }
+        else {
+            std::cout << "TRANSPARENCY DISABLED" << std::endl;
+        }
     }
 
     if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
         renderShadowMap = !renderShadowMap;
-        if (renderShadowMap) std::cout << "DEBUG DRAW SHADOW MAP ENABLED" << std::endl;
-        else std::cout << "DEBUG DRAW SHADOW MAP DISABLED" << std::endl;
+        if (renderShadowMap) {
+            std::cout << "DEBUG DRAW SHADOW MAP ENABLED" << std::endl;
+        }
+        else {
+            std::cout << "DEBUG DRAW SHADOW MAP DISABLED" << std::endl;
+        }
     }
 }
-
 
 void setActiveShader(Shader *shader)
 {

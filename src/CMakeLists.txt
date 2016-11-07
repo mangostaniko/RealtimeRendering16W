@@ -10,13 +10,11 @@ set(SRC_CLASSES
 
     shader.h
     shader.cpp
-    texture.h
-    texture.cpp
+    texture.hpp
     textrenderer.h
     textrenderer.cpp
 
-    sceneobject.h
-    sceneobject.cpp
+    sceneobject.hpp
     camera.h
     camera.cpp
     light.h
@@ -75,6 +73,15 @@ target_link_libraries(
     ${FreeImage_LIBRARIES}
     ${ASSIMP_LIBRARIES}
     ${FREETYPE_LIBRARIES}
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/src/shaders
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/data
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/data
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "GLM_FORCE_RADIANS;GLM_FORCE_SWIZZLE")

@@ -3,9 +3,10 @@
 Camera::CameraNavigationMode Camera::cameraNavMode = FREE_FLY;
 double Camera::scrollY = 0.0;
 
+
 Camera::Camera(GLFWwindow *window_, const glm::mat4 &matrix_, float fieldOfView_, float aspectRatio_, float nearPlane_, float farPlane_)
-    : window(window_)
-    , SceneObject(matrix_)
+    : SceneObject(matrix_)
+    , window(window_)
     , fieldOfView(fieldOfView_)
     , aspectRatio(aspectRatio_)
     , nearPlane(nearPlane_)

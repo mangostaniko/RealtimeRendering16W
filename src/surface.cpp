@@ -124,14 +124,14 @@ void Surface::draw(Shader *shader, Texture::FilterType filterType)
 
     // DEBUG PRINT VERTICES
     //std::cout << vertices.size() << std::endl;
-    /*//
+    /*
     for (unsigned int i = 0; i < vertices.size(); ++i) {
         std::cout << "pos " << vertices[i].position[0] << vertices[i].position[1] << vertices[i].position[2] << std::endl;
         std::cout << "normal " << vertices[i].normal[0] << vertices[i].normal[1] << vertices[i].normal[2] << std::endl;
         std::cout << "uv " << vertices[i].uv[0] << vertices[i].uv[1] << std::endl;
 
     }
-    //*/
+    */
 
 }
 

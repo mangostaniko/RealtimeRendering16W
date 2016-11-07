@@ -44,7 +44,6 @@ void Light::update(float timeDelta)
         if (timePassed > daySectionDuration) {
             timePassed = 0.f;
             dayTime = EVENING;
-            
         }
     }
     else if (dayTime == 2) {
@@ -68,9 +67,7 @@ void Light::update(float timeDelta)
     t = timeDelta / (daySectionDuration * 2.f);
     glm::vec3 transDist = direction * (distance * t);
     translate(transDist, SceneObject::RIGHT);
-    
 }
-
 
 glm::vec3 Light::getColor() const
 {
