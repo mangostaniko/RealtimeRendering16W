@@ -643,9 +643,6 @@ void newGame()
 
     glfwSetTime(0);
 
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-
     sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), LIGHT_END, glm::vec3(1.f, 0.89f, 0.6f), glm::vec3(0.87f, 0.53f, 0.f), dayLength);
 
     // RESET CAMERA

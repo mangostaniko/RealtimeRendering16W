@@ -18,7 +18,7 @@ if (DOXYGEN_FOUND)
 
     # add doc as target
     ADD_CUSTOM_TARGET(
-        doc ALL
+        doc
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/api/html/index.html
         COMMENT "Building doxygen documentation"
     )

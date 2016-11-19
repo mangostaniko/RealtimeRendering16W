@@ -75,19 +75,22 @@ target_link_libraries(
     ${FREETYPE_LIBRARIES}
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/src/shaders
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/data
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>/data
-)
-
 target_compile_definitions(${PROJECT_NAME} PRIVATE "GLM_FORCE_RADIANS;GLM_FORCE_SWIZZLE")
-
 
 IF (MSVC)
     # add options from visual studio project
     target_compile_definitions(${PROJECT_NAME} PRIVATE "GLEW_STATIC")
 ENDIF ()
+
+add_custom_target(shaders)
+
+add_custom_command(TARGET shaders PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders
+        ${CMAKE_CURRENT_BINARY_DIR}/shaders
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/data
+        ${CMAKE_CURRENT_BINARY_DIR}/data
+)
+
+add_dependencies(${PROJECT_NAME} shaders)
