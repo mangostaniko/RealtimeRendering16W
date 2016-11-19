@@ -19,7 +19,7 @@ class Texture
     const std::string filePath;
 
 public:
-    Texture(const std::string &filePath, bool alpha);
+	Texture(const std::string &filePath);
     ~Texture();
 
     enum FilterType {
@@ -50,7 +50,7 @@ public:
 };
 
 
-inline Texture::Texture(const std::string &filePath_, bool alpha)
+inline Texture::Texture(const std::string &filePath_)
     : filePath(filePath_)
 {
     glGenTextures(1, &handle);
@@ -68,15 +68,16 @@ inline Texture::Texture(const std::string &filePath_, bool alpha)
     // a unit can contain multiple texture targets, but recommended to use only one per unit
     // parameters: target, mipmap level, internal format, width, heigth, border width, internal format, data format, image data
     // note: for some reason it seems that 8 bit RGB images are really stored in BGR format.
-    if (alpha) {
+	if (img.isTransparent()) {
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGBA, img.getWidth(), img.getHeight(), 0,
-            GL_BGRA, GL_UNSIGNED_BYTE, img.accessPixels());
-    } else {
-        glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RGB, img.getWidth(), img.getHeight(), 0,
-            GL_BGR, GL_UNSIGNED_BYTE, img.accessPixels());
-    }
+		    GL_BGRA, GL_UNSIGNED_BYTE, img.accessPixels());
+		std::cout << "found texture with alpha channel: " << filePath << std::endl;
+	} else {
+		glTexImage2D(
+		    GL_TEXTURE_2D, 0, GL_RGB, img.getWidth(), img.getHeight(), 0,
+		    GL_BGR, GL_UNSIGNED_BYTE, img.accessPixels());
+	}
 
     // automatically generate mipmaps (mip = multum in parvo, i.e. 'much in little')
     // mipmaps are filtered and downsampled copies of the texture stored compactly in a single file,
