@@ -8,6 +8,9 @@ set(CMAKE_MODULE_PATH
     "${CMAKE_SOURCE_DIR}/cmake"
 )
 
+# specify runtime dir to be the build dir for out-of-source build
+# (aka shadow build)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 ### COMPILER FLAGS ###
 # note: add_definitions can be used as well, but is intended for preprocessor definitions
@@ -19,7 +22,7 @@ IF (CMAKE_COMPILER_IS_GNUCC)
     # Setup warning flags
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
     # Specify language's standard version
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ENDIF ()
 
 
@@ -36,8 +39,8 @@ find_package(Freetype REQUIRED)
 
 ### INCLUDE HEADER FILES ###
 include_directories(
-    ${OPENGL_INCLUDE_DIRS} 
-    ${GLEW_INCLUDE_DIRS} 
+    ${OPENGL_INCLUDE_DIRS}
+    ${GLEW_INCLUDE_DIRS}
     ${GLFW_INCLUDE_DIRS}
     ${FreeImage_INCLUDE_DIR}
     ${ASSIMP_INCLUDE_DIRS}

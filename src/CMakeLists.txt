@@ -87,10 +87,10 @@ add_custom_target(shaders)
 add_custom_command(TARGET shaders PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders
-        ${CMAKE_CURRENT_BINARY_DIR}/shaders
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/data
-        ${CMAKE_CURRENT_BINARY_DIR}/data
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data
 )
 
 add_dependencies(${PROJECT_NAME} shaders)
