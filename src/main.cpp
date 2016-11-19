@@ -21,7 +21,6 @@
 #include "light.h"
 #include "textrenderer.h"
 #include "effects/ssaopostprocessor.h"
-#include "effects/particlesystem.h"
 
 void init(GLFWwindow *window);
 void initSM();
@@ -52,14 +51,13 @@ bool shadowsEnabled             = true;
 bool vsmShadowsEnabled          = true;
 bool renderShadowMap            = false;
 bool frustumCullingEnabled      = false;
-bool useAlpha                   = false;
+bool debugDrawTransparent                   = false;
 
 Texture::FilterType filterType = Texture::LINEAR_MIPMAP_LINEAR;
 
 Shader *textureShader, *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader;
 Shader *activeShader;
 TextRenderer *textRenderer;
-ParticleSystem *particleSystem;
 SSAOPostprocessor *ssaoPostprocessor;
 
 Camera *camera; glm::mat4 cameraInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, 50)));
@@ -121,8 +119,8 @@ int main(int argc, char **argv)
 {
     // HANDLE COMMAND LINE PARAMETERS
 
-    windowWidth = 800;
-    windowHeight = 600;
+	windowWidth = 1024;
+	windowHeight = 800;
     int refresh_rate = 60;
     bool fullscreen = 0;
 
@@ -260,8 +258,6 @@ int main(int argc, char **argv)
         // draw shadow map for debugging (if enabled)
         debugShadowPass();
 
-        particleSystem->draw(camera->getViewMat(), camera->getProjMat(), glm::vec3(1, 0.55, 0.5));
-
         drawText(deltaT, windowWidth, windowHeight);
 
         // end the current frame (swaps the front and back buffers)
@@ -298,6 +294,12 @@ void init(GLFWwindow *window)
     // enable z buffer test
     glEnable(GL_DEPTH_TEST);
 
+	// alpha blending for textures with alpha channel
+	// NOTE disabled, since proper alpha blending requires that triangles are drawn from back to front
+	// since depth buffer rejects fragments of greater depth once we already have a closer value
+	// but we need all the color values of the fragments for blending.
+	//glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // INIT SHADOW MAPPING (FBO, Texture, Shader)
     initSM();
 
@@ -308,9 +310,6 @@ void init(GLFWwindow *window)
 
     // INIT TEXT RENDERER
     textRenderer = new TextRenderer("data/fonts/cliff.ttf", width, height);
-
-    // INIT PARTICLE SYSTEM
-    particleSystem = new ParticleSystem(glm::mat4(1.0f), "data/models/skunk/smoke.png", 30, 100.f, 15.f, -0.05f);
 
     // INIT SSAO POST PROCESSOR
     ssaoPostprocessor = new SSAOPostprocessor(width, height, 32);
@@ -430,8 +429,6 @@ void update(float timeDelta)
 
     eagle->update(timeDelta, camera->getLocation() + glm::vec3(0, 2, 0), true, false);
 
-    particleSystem->update(timeDelta, camera->getViewMat());
-
     sun->update(timeDelta);
 
     // SET POSITION AND COLOR IN SHADERS
@@ -442,12 +439,12 @@ void update(float timeDelta)
     GLint lightSpecularLocation = glGetUniformLocation(activeShader->programHandle, "light.specular");
 
     GLint materialSpecularLocation = glGetUniformLocation(activeShader->programHandle, "material.specular");
-    glUniform3f(materialSpecularLocation, 0.2f, 0.2f, 0.2f);
+	glUniform3f(materialSpecularLocation, 0.2f, 0.2f, 0.2f);
 
-    glUniform3f(lightPosLocation, sun->getLocation().x, sun->getLocation().y, sun->getLocation().z);
-    glUniform3f(lightAmbientLocation, sun->getColor().x * 0.3f, sun->getColor().y * 0.3f, sun->getColor().z * 0.3f);
-    glUniform3f(lightDiffuseLocation, sun->getColor().x, sun->getColor().y, sun->getColor().z);
-    glUniform3f(lightSpecularLocation, sun->getColor().x * 0.8f, sun->getColor().y * 0.8f, sun->getColor().z * 0.8f);
+	glUniform3f(lightPosLocation, sun->getLocation().x, sun->getLocation().y, sun->getLocation().z);
+	glUniform3f(lightAmbientLocation, sun->getColor().x * 0.3f, sun->getColor().y * 0.3f, sun->getColor().z * 0.3f);
+	glUniform3f(lightDiffuseLocation, sun->getColor().x, sun->getColor().y, sun->getColor().z);
+	glUniform3f(lightSpecularLocation, sun->getColor().x * 0.8f, sun->getColor().y * 0.8f, sun->getColor().z * 0.8f);
 }
 
 
@@ -458,11 +455,11 @@ void drawScene()
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
-    if (useAlpha) {
-        glUniform1f(glGetUniformLocation(activeShader->programHandle, "useAlpha"), true);
+	if (debugDrawTransparent) {
+		glUniform1f(glGetUniformLocation(activeShader->programHandle, "debugDrawTransparent"), true);
     }
     else {
-        glUniform1f(glGetUniformLocation(activeShader->programHandle, "useAlpha"), false);
+		glUniform1f(glGetUniformLocation(activeShader->programHandle, "debugDrawTransparent"), false);
     }
 
     // pass viewProjection matrix to shader
@@ -663,9 +660,8 @@ void cleanup()
     delete blurVSMDepthShader; blurVSMDepthShader = nullptr;
     activeShader = nullptr;
 
-    delete textRenderer; textRenderer = nullptr;
-    delete particleSystem; particleSystem = nullptr;
-    delete ssaoPostprocessor; ssaoPostprocessor = nullptr;
+	delete textRenderer; textRenderer = nullptr;
+	delete ssaoPostprocessor; ssaoPostprocessor = nullptr;
 
     delete camera; camera = nullptr;
     delete eagle; eagle = nullptr;
@@ -818,8 +814,8 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     }
 
     if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_PRESS) {
-        useAlpha = !useAlpha;
-        if (useAlpha) {
+		debugDrawTransparent = !debugDrawTransparent;
+		if (debugDrawTransparent) {
             std::cout << "TRANSPARENCY ENABLED" << std::endl;
         }
         else {

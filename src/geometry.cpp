@@ -72,7 +72,7 @@ void Geometry::loadSurfaces(const std::string &filePath)
     // note: experiment with flags like aiProcess_SplitLargeMeshes, aiProcess_OptimizeMeshes, when using bigger models.
 
     Assimp::Importer importer;
-    const aiScene *scene = importer.ReadFile(filePath, aiProcess_PreTransformVertices | aiProcess_Triangulate);
+	const aiScene *scene = importer.ReadFile(filePath, aiProcess_PreTransformVertices | aiProcess_Triangulate);
 
     // check for errors
     if (!scene || !scene->mRootNode || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) {
@@ -200,7 +200,7 @@ std::shared_ptr<Texture> Geometry::loadMaterialTexture(aiMaterial *mat, aiTextur
 
         // otherwise load the texture from the file
         if (!skip) {
-            loadedTextures.push_back(std::make_shared<Texture>(directoryPath + '/' + texturePath.C_Str(), false));
+			loadedTextures.push_back(std::make_shared<Texture>(directoryPath + '/' + texturePath.C_Str()));
             std::cout << "loaded texture: " << directoryPath + '/' + texturePath.C_Str() << std::endl;
             texture = loadedTextures.back();
         }
