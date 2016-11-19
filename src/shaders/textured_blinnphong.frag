@@ -102,6 +102,8 @@ void main()
     vec3 lightDir = normalize(light.position - P);
     vec3 viewDir = normalize(cameraPos - P);
 
+    // if texture has rgb only, alpha is set to 1.
+    // if there is no texture, all values are 0.
     vec4 diffuseColor = texture(material.diffuse, texCoord).rgba;
 
     // for transparent textures (e.g. the palm leaves)
