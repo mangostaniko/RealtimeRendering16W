@@ -292,6 +292,15 @@ void init(GLFWwindow *window)
     // enable z buffer test
     glEnable(GL_DEPTH_TEST);
 
+	// AUTOMATIC GAMMA CORRECTION
+	// use sRGB color space, which is gamma corrected.
+	// color textures are typically stored in sRGB, output should also be in sRGB color space.
+	// however our calculations are done in linear space.
+	// enabling GL_FRAMEBUFFER_SRGB will tell OpenGL to transform sRGB texture to linear space
+	// and transform back for the framebuffer write in the end.
+	// thus we dont need to do manual gamma correction in fragment shader.
+	glEnable(GL_FRAMEBUFFER_SRGB);
+
 	// alpha blending for textures with alpha channel
 	// NOTE disabled, since proper alpha blending requires that triangles are drawn from back to front
 	// since depth buffer rejects fragments of greater depth once we already have a closer value

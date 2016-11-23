@@ -73,7 +73,8 @@ inline Texture::Texture(const std::string &filePath_)
 		             GL_BGRA, GL_UNSIGNED_BYTE, img.accessPixels());
 		std::cout << "found texture with alpha channel: " << filePath << std::endl;
 	} else {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.getWidth(), img.getHeight(), 0,
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.getWidth(), img.getHeight(), 0,
 		             GL_BGR, GL_UNSIGNED_BYTE, img.accessPixels());
 	}
 
