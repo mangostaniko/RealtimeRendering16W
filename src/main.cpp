@@ -51,7 +51,7 @@ bool shadowsEnabled             = true;
 bool vsmShadowsEnabled          = true;
 bool renderShadowMap            = false;
 bool frustumCullingEnabled      = false;
-bool debugDrawTransparent                   = false;
+bool debugDrawTransparent       = false;
 
 Texture::FilterType filterType = Texture::LINEAR_MIPMAP_LINEAR;
 
@@ -65,20 +65,18 @@ Eagle *eagle; glm::mat4 eagleInitTransform(glm::translate(glm::mat4(1.0f), glm::
 
 Geometry *island;
 
-Light *sun;
-const glm::vec3 LIGHT_START(glm::vec3(-100, 150, 0));
-const glm::vec3 LIGHT_END(glm::vec3(20, 150, 0));
-
+Light *sun; // sun start and end positions are linearly interpolated over time of day
+const glm::vec3 LIGHT_START(glm::vec3(-20, 50, -40));
+const glm::vec3 LIGHT_END(glm::vec3(20, 30, -50));
 const float dayLength = 60;
 
 // Shadow Map FBO and depth texture
+const int SM_WIDTH = 2048, SM_HEIGHT = 2048;
+const GLfloat SM_NEAR_PLANE = 0.5f, SM_FAR_PLANE = 500.f;
 GLuint depthMapFBO, vsmDepthMapFBO;
 GLuint depthMap, vsmDepthMap;
 GLuint pingpongFBO;
 GLuint pingpongColorMap;
-
-const int SM_WIDTH = 1024, SM_HEIGHT = 1024;
-const GLfloat NEAR_PLANE = 75.f, FAR_PLANE = 250.f;
 
 void frameBufferResize(GLFWwindow *window, int width, int height);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
@@ -119,10 +117,10 @@ int main(int argc, char **argv)
 {
     // HANDLE COMMAND LINE PARAMETERS
 
-	windowWidth = 1024;
-	windowHeight = 800;
+	windowWidth = 1920;
+	windowHeight = 1080;
     int refresh_rate = 60;
-    bool fullscreen = 0;
+	bool fullscreen = 0;
 
     if (argc == 1) {
         // no parameters specified, continue with default values
@@ -326,7 +324,7 @@ void init(GLFWwindow *window)
     island = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/island/island.dae");
 
     // INIT CAMERA
-    camera = new Camera(window, cameraInitTransform, glm::radians(80.0f), width/(float)height, 0.2f, 200.0f); // mat, fov, aspect, znear, zfar
+	camera = new Camera(window, cameraInitTransform, glm::radians(90.0f), width/(float)height, 0.2f, 600.0f); // mat, fov, aspect, znear, zfar
 
     // INIT EAGLE
     eagle = new Eagle(eagleInitTransform, "data/models/eagle/eagle.dae");
@@ -429,7 +427,9 @@ void update(float timeDelta)
 
     eagle->update(timeDelta, camera->getLocation() + glm::vec3(0, 2, 0), true, false);
 
-    sun->update(timeDelta);
+	sun->update(timeDelta);
+	//std::cout << sun->getLocation().x << " " << sun->getLocation().y << " " << sun->getLocation().z << " " << std::endl;
+
 
     // SET POSITION AND COLOR IN SHADERS
 
@@ -474,11 +474,14 @@ void drawScene()
 
     Geometry::drawnSurfaceCount = 0;
 
+	// we need to disable back face culling to render palm leaves which are not closed meshes
+	glDisable(GL_CULL_FACE);
     glUniform1f(glGetUniformLocation(activeShader->programHandle, "material.shininess"), 64.f);
-    island->draw(activeShader, camera, false, filterType, camera->getViewMat());
+	island->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+	glEnable(GL_CULL_FACE);
 
     glUniform1f(glGetUniformLocation(activeShader->programHandle, "material.shininess"), 32.f);
-    eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+	eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
 
     if (wireframeEnabled) {
         // disable wireframe
@@ -516,7 +519,7 @@ void drawText(double deltaT, int windowWidth, int windowHeight)
 void shadowFirstPass(glm::mat4 &lightViewPro)
 {
     // Calculate Light View-Projection Matrix
-    glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, NEAR_PLANE, FAR_PLANE);
+	glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, SM_NEAR_PLANE, SM_FAR_PLANE);
     //glm::mat4 lightProjection = glm::perspective(100.f, (GLfloat) SM_WIDTH / (GLfloat) SM_HEIGHT, nearPlane, farPlane);
     glm::mat4 lightView = glm::lookAt(sun->getLocation(), glm::vec3(0.f), glm::vec3(0, 1, 0));
     lightViewPro = lightProjection * lightView;
@@ -624,8 +627,8 @@ void debugShadowPass()
 
         setActiveShader(debugDepthShader);
 
-        glUniform1f(glGetUniformLocation(debugDepthShader->programHandle, "near_plane"), NEAR_PLANE);
-        glUniform1f(glGetUniformLocation(debugDepthShader->programHandle, "far_plane"), FAR_PLANE);
+		glUniform1f(glGetUniformLocation(debugDepthShader->programHandle, "near_plane"), SM_NEAR_PLANE);
+		glUniform1f(glGetUniformLocation(debugDepthShader->programHandle, "far_plane"), SM_FAR_PLANE);
         glActiveTexture(GL_TEXTURE0);
 
         glBindTexture(GL_TEXTURE_2D, vsmDepthMap);

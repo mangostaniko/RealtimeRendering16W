@@ -46,7 +46,7 @@ float calcShadow(vec4 lightSpacePos)
         return 0.0;
     }
 
-    // Bias for Shadow Acne
+    // Bias to prevent Shadow Acne
     float bias = max(0.005 * (1.0 - dot(normalize(N), normalize(light.position - P))), 0.0025);
 
     //float shadow = currentZ - bias > closestZ ? 1.0 : 0.0;

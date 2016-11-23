@@ -67,6 +67,7 @@ void Light::update(float timeDelta)
     t = timeDelta / (daySectionDuration * 2.f);
     glm::vec3 transDist = direction * (distance * t);
     translate(transDist, SceneObject::RIGHT);
+
 }
 
 glm::vec3 Light::getColor() const
