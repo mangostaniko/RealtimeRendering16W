@@ -100,19 +100,19 @@ void Surface::draw(Shader *shader, Texture::FilterType filterType)
     // for now just uses the diffuse texture
 
     if (texDiffuse) {
-        GLint diffuseTexLocation = glGetUniformLocation(shader->programHandle, "material.diffuse"); // get uniform location in shader
+		GLint diffuseTexLocation = shader->getUniformLocation("material.diffuse"); // get uniform location in shader
         glUniform1i(diffuseTexLocation, 0); // bind shader texture location with texture unit 0
         texDiffuse->bind(0); // activate texture unit 0 and bind texture to it
         texDiffuse->setFilterMode(filterType);
     }
     /*
     if (texSpecular) {
-        GLint specularTexLocation = glGetUniformLocation(shader->programHandle, "material.specular");
+		GLint specularTexLocation = shader->getUniformLocation("material.specular");
         glUniform1i(specularTexLocation, 1);
         texSpecular->bind(1);
     }
     if (texNormal) {
-        GLint normalsTexLocation = glGetUniformLocation(shader->programHandle, "normalTexture");
+		GLint normalsTexLocation = shader->getUniformLocation("normalTexture");
         glUniform1i(normalsTexLocation, 2);
         texNormal->bind(2);
     }*/

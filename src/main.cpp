@@ -55,7 +55,14 @@ bool debugDrawTransparent       = false;
 
 Texture::FilterType filterType = Texture::LINEAR_MIPMAP_LINEAR;
 
-GLuint commonShaderUniformsUBO; // uniform buffer object to share common uniform data between shaders
+// uniform buffer object to share common uniform data between shaders
+// NOTE: it seems that on the gpu or opengl implementation the offsets
+// i.e. the size of uniform blocks in gpu memory must be multiples of 256
+// otherwise glBindBufferRange yields error 1281 (invalid value).
+GLuint commonShaderUniformsUBO;
+GLint uboMatricesBlockSize = 256; //2 * sizeof(glm::mat4);
+GLint uboViewAndCamBlockSize = 256; //5 * sizeof(glm::vec4);
+GLint uboTotalSize = uboMatricesBlockSize + uboViewAndCamBlockSize;
 
 Shader *textureShader, *waterShader;
 Shader *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader; // shadow mapping
@@ -187,7 +194,7 @@ int main(int argc, char **argv)
     glfwSetFramebufferSizeCallback(window, frameBufferResize);
     glfwSetKeyCallback(window, keyCallback);
 
-    // all initializations happen here
+	// most initializations happen here
     init(window);
 
     //////////////////////////
@@ -216,10 +223,30 @@ int main(int argc, char **argv)
         /// UPDATE
         //////////////////////////
         if (!paused) {
-
             update(deltaT);
-
         }
+
+		///////////////////////////////////////////////////////////
+		//// SET SHARED UNIFORM DATA VIA UNIFORM BUFFER OBJECT ////
+		///////////////////////////////////////////////////////////
+		glBindBuffer(GL_UNIFORM_BUFFER, commonShaderUniformsUBO);
+
+		// UBO data for Matrices shader uniform block at memory range bound to binding point 0
+		GLint m4sz = sizeof(glm::mat4);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0 + 0*m4sz, m4sz, glm::value_ptr(camera->getViewMat())); // view mat
+		glBufferSubData(GL_UNIFORM_BUFFER, 0 + 1*m4sz, m4sz, glm::value_ptr(camera->getProjMat())); // proj mat
+
+		// UBO data for LightAndCam shader uniform block at memory range bound to binding point 1
+		GLint v4sz = sizeof(glm::vec4);
+		GLint offset = uboMatricesBlockSize;
+		glBufferSubData(GL_UNIFORM_BUFFER, offset + 0*v4sz, v4sz, glm::value_ptr(glm::vec4(sun->getLocation(), 1)));     // light pos
+		glBufferSubData(GL_UNIFORM_BUFFER, offset + 1*v4sz, v4sz, glm::value_ptr(glm::vec4(sun->getColor() * 0.3f, 1))); // ambient
+		glBufferSubData(GL_UNIFORM_BUFFER, offset + 2*v4sz, v4sz, glm::value_ptr(glm::vec4(sun->getColor(), 1)));        // diffuse
+		glBufferSubData(GL_UNIFORM_BUFFER, offset + 3*v4sz, v4sz, glm::value_ptr(glm::vec4(sun->getColor() * 0.8f, 1))); // specular
+		glBufferSubData(GL_UNIFORM_BUFFER, offset + 4*v4sz, v4sz, glm::value_ptr(glm::vec4(camera->getLocation(), 1)));  // camera pos
+
+		// unbind UBO
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 
         //////////////////////////
@@ -234,14 +261,9 @@ int main(int argc, char **argv)
 			shadowFirstPass(lightVPMat);
         }
 
-		// set shared uniform data via Uniform Buffer Object
-		glBindBuffer(GL_UNIFORM_BUFFER, commonShaderUniformsUBO);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(camera->getViewMat()));
-		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(camera->getProjMat()));
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
 		// set uniforms for shadow mapping in default textureShader
-        setActiveShader(textureShader);
+		setActiveShader(textureShader);
+		glUniformMatrix4fv(activeShader->getUniformLocation("viewMat"), 1, GL_FALSE, glm::value_ptr(camera->getViewMat()));
 		glUniformMatrix4fv(activeShader->getUniformLocation("lightVPMat"), 1, GL_FALSE, glm::value_ptr(lightVPMat));
 		glUniform1i(activeShader->getUniformLocation("shadowMap"), 1);
         glActiveTexture(GL_TEXTURE0 + 1);
@@ -266,9 +288,8 @@ int main(int argc, char **argv)
         //////////////////////////
         /// ERRORS AND EVENTS
         //////////////////////////
-        GLenum glErr = glGetError();
+		GLenum glErr = glGetError();
         if (glErr != GL_NO_ERROR) {
-            // handle errors
             std::cerr << "ERROR: OpenGL Error " << glErr << std::endl;
         }
 
@@ -338,8 +359,7 @@ void init(GLFWwindow *window)
 	// MAKE SURE TO MAINTAIN UNIFORM BLOCK LAYOUT ACROSS ALL SHADERS FILES!
 	// THIS LAYOUT ONLY ALLOWS VECTORS TO BE VEC2 OR VEC4
 	// (VEC3 ARE PADDED, BUT DONT RELY ON GL IMPLEMENTATION FOR IT) !!
-	// ORDER OF UNIFORMS WITHIN BLOCK MUST NOT BE CHANGED !
-	GLint uboTotalSize = 2 * sizeof(glm::mat4);
+	// ORDER OF UNIFORMS WITHIN BLOCK MUST BE CONSISTENT !
 	glGenBuffers(1, &commonShaderUniformsUBO);
 	glBindBuffer(GL_UNIFORM_BUFFER, commonShaderUniformsUBO);
 	glBufferData(GL_UNIFORM_BUFFER, uboTotalSize, NULL, GL_STATIC_DRAW); // allocate bytes of memory, no data assigned
@@ -351,8 +371,8 @@ void init(GLFWwindow *window)
 	// UBO <---> Binding Point
 	// Note that a single UBO can store data for multiple different shader uniform blocks
 	// by binding certain ranges of the UBO memory to different binding locations.
-	GLint uboMatricesBlockSize = 2 * sizeof(glm::mat4);
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, commonShaderUniformsUBO, 0, uboMatricesBlockSize); // binding point 0, ubo offset, range
+	glBindBufferRange(GL_UNIFORM_BUFFER, 1, commonShaderUniformsUBO, uboMatricesBlockSize, uboViewAndCamBlockSize);
 
 	// To assign UBO data use the following:
 	//glBindBuffer(GL_UNIFORM_BUFFER, <ubo>);
@@ -481,6 +501,8 @@ void update(float timeDelta)
 
 void drawScene()
 {
+	Geometry::drawnSurfaceCount = 0;
+
     if (wireframeEnabled) {
         // enable wireframe
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -498,32 +520,10 @@ void drawScene()
 		glUniform1f(activeShader->getUniformLocation("debugDrawTransparent"), false);
     }
 
-	// pass view and projection matrices to shader
-	glUniformMatrix4fv(activeShader->getUniformLocation("viewMat"),
-	                   1, GL_FALSE, glm::value_ptr(camera->getViewMat())); // count, transpose?, value pointer
-	glUniformMatrix4fv(activeShader->getUniformLocation("projMat"),
-	                   1, GL_FALSE, glm::value_ptr(camera->getProjMat()));
-
-    // pass camera position to shader
-	glUniform3f(activeShader->getUniformLocation("cameraPos"),
-	            camera->getLocation().x, camera->getLocation().y, camera->getLocation().z);
-
-	// pass light position and colors to shader
-	glUniform3f(activeShader->getUniformLocation("light.position"),
-	            sun->getLocation().x, sun->getLocation().y, sun->getLocation().z);
-	glUniform3f(activeShader->getUniformLocation("light.ambient"),
-	            sun->getColor().x * 0.3f, sun->getColor().y * 0.3f, sun->getColor().z * 0.3f);
-	glUniform3f(activeShader->getUniformLocation("light.diffuse"),
-	            sun->getColor().x, sun->getColor().y, sun->getColor().z);
-	glUniform3f(activeShader->getUniformLocation("light.specular"),
-	            sun->getColor().x * 0.8f, sun->getColor().y * 0.8f, sun->getColor().z * 0.8f);
-
 	// pass common material color to shader
 	glUniform3f(activeShader->getUniformLocation("material.specular"), 0.2f, 0.2f, 0.2f);
 
     // DRAW GEOMETRY
-
-    Geometry::drawnSurfaceCount = 0;
 
 	// we need to disable back face culling to render palm leaves which are not closed meshes
 	glDisable(GL_CULL_FACE);
@@ -536,9 +536,9 @@ void drawScene()
 
 	//////////////////////////
 	/// ACTIVE SHADER WATER
-	//setActiveShader(waterShader);
+	setActiveShader(waterShader);
 	ocean->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
-	//setActiveShader(textureShader);
+	setActiveShader(textureShader);
 	//////////////////////////
 
     if (wireframeEnabled) {

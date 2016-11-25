@@ -25,14 +25,14 @@ uniform mat4 lightVPMat;
 // MAKE SURE TO MAINTAIN UNIFORM BLOCK LAYOUT ACROSS ALL SHADERS FILES!
 // THIS LAYOUT ONLY ALLOWS VECTORS TO BE VEC2 OR VEC4 !!
 // (VEC3 ARE PADDED, BUT DONT RELY ON GL IMPLEMENTATION FOR IT)
-// ORDER OF UNIFORMS WITHIN BLOCK MUST NOT BE CHANGED !
+// ORDER OF UNIFORMS WITHIN BLOCK MUST BE CONSISTENT FOR ALL SHADERS !
 // block will be bound to binding point 0, make sure to bind UBO to same binding point.
-layout (std140, binding = 0) uniform Matrices
+layout(std140, binding = 0) uniform Matrices
 {
     //                    // offset   // byte size
     mat4 viewMat;         // 0        // 64 (4*4*4, since 4 byte per float, 4 float per vec, 4 vec per mat)
     mat4 projMat;         // 64       // 64
-    //                    // 128 (block total byte)
+    //                    // 128 (block total bytes)
 };
 
 void main()

@@ -68,12 +68,12 @@ inline Texture::Texture(const std::string &filePath_)
 	// a unit can contain multiple texture targets, but recommended to use only one per unit
 	// parameters: target, mipmap level, internal format, width, heigth, border width, internal format, data format, image data
 	// note: for some reason it seems that 8 bit RGB images are really stored in BGR format.
+	// color texture are usually stored in sRGB gamma corrected color space
 	if (img.isTransparent()) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.getWidth(), img.getHeight(), 0,
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, img.getWidth(), img.getHeight(), 0,
 		             GL_BGRA, GL_UNSIGNED_BYTE, img.accessPixels());
 		std::cout << "found texture with alpha channel: " << filePath << std::endl;
 	} else {
-		// color texture are usually stored in sRGB gamma corrected color space
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, img.getWidth(), img.getHeight(), 0,
 		             GL_BGR, GL_UNSIGNED_BYTE, img.accessPixels());
 	}

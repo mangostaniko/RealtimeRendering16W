@@ -3,28 +3,31 @@
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outViewSpacePos;
 
-struct Material {
-    sampler2D diffuse; // texture unit 0
-    vec3 specular;
-    float shininess;
-};
-
-struct Light {
-    vec3 position;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-
 in vec3 P;
 in vec3 N;
 in vec2 texCoord;
 in vec4 PLightSpace;
 in vec4 PViewSpace;
 
-uniform vec3 cameraPos;
+// uniforms shared with other shaders via a Uniform Buffer Object
+// see vertex shader for details on how to work with UBOs !!
+layout(std140, binding = 1) uniform LightAndCamera
+{
+    //                     // offset   // byte size
+    vec4 lightPos;         // 0        // 16 (4*4, since 4 byte per float, 4 float per vec
+    vec4 lightAmbient;     // 16       // 16
+    vec4 lightDiffuse;     // 32       // 16
+    vec4 lightSpecular;    // 48       // 16
+    vec4 cameraPos;        // 64       // 16
+    //                     // 80 (block total bytes)
+};
+
+struct Material {
+    sampler2D diffuse; // texture unit 0
+    vec3 specular;
+    float shininess;
+};
 uniform Material material;
-uniform Light light;
 
 uniform sampler2D shadowMap; // texture unit 1
 uniform sampler2D ssaoTexture; // texture unit 2
@@ -47,7 +50,7 @@ float calcShadow(vec4 lightSpacePos)
     }
 
     // Bias to prevent Shadow Acne
-    float bias = max(0.005 * (1.0 - dot(normalize(N), normalize(light.position - P))), 0.0025);
+    float bias = max(0.005 * (1.0 - dot(normalize(N), normalize(lightPos.xyz - P))), 0.0025);
 
     //float shadow = currentZ - bias > closestZ ? 1.0 : 0.0;
 
@@ -99,8 +102,8 @@ void main()
 {
     // Normalize normal, light and view vectors
     vec3 normal = normalize(N);
-    vec3 lightDir = normalize(light.position - P);
-    vec3 viewDir = normalize(cameraPos - P);
+    vec3 lightDir = normalize(lightPos.xyz - P);
+    vec3 viewDir = normalize(cameraPos.xyz - P);
 
     // if texture has rgb only, alpha is set to 1.
     // if there is no texture, all values are 0.
@@ -119,15 +122,15 @@ void main()
     }
 
     // Diffuse
-    vec4 diffuse = max(dot(normal, lightDir), 0.0f) * diffuseColor * vec4(light.diffuse, 1);
+    vec4 diffuse = max(dot(normal, lightDir), 0.0f) * diffuseColor * lightDiffuse;
 
     // Ambient
-    vec4 ambient = vec4(light.ambient, 1) * diffuseColor;
+    vec4 ambient = diffuseColor * lightAmbient;
 
     // Specular
     vec3 halfVec = normalize(lightDir + viewDir); // half vector of light and view vectors
     vec4 specularColor = vec4(1.0f); //texture(specularTexture, texCoord).rgb;
-    vec4 specular = pow(max(dot(halfVec, normal), 0.0f), material.shininess) * vec4(light.specular * material.specular, 1);
+    vec4 specular = pow(max(dot(halfVec, normal), 0.0f), material.shininess) * lightSpecular * vec4(material.specular, 1);
 
     float AO = 1;
     if (useSSAO) { AO = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0)).r; }
