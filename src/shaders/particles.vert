@@ -1,4 +1,5 @@
-#version 330 core
+#version 450 core
+
 
 layout (location = 0) in vec4 particleQuadVertex; // xy used for position, zw used for uvs
 layout (location = 1) in vec4 particleData; // particle center x, y, z + timeToLive [0, 1]

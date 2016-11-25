@@ -79,6 +79,7 @@ GLint Shader::getUniformLocation(const std::string& name)
 	// if not yet cached, retrieve via glGetUniformLocation
 	bool notCached = uniforms.find(name) == uniforms.end();
 	if (notCached) {
+		//std::cout << "retrieved and cached uniform location of " << name << std::endl;
 		GLint location = glGetUniformLocation(programHandle, name.c_str());
 		uniforms[name] = location;
 	}

@@ -1,4 +1,5 @@
-#version 330 core
+#version 450 core
+
 
 in vec2 texCoord;
 in float timeToLive; // used to fade alpha or change color

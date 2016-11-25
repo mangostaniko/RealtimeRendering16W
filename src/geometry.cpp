@@ -36,6 +36,10 @@ void Geometry::update(float timeDelta)
 
 void Geometry::draw(Shader *shader, Camera *camera, bool useFrustumCulling, Texture::FilterType filterType, const glm::mat4 &viewMat)
 {
+	// NOTE: Different geometries will use different shaders.
+	// The following uniforms are those used by most such shaders.
+	// For very specific shaders consider subtyping Geometry.
+
     // pass model matrix to shader
     GLint modelMatLocation = glGetUniformLocation(shader->programHandle, "modelMat"); // get uniform location in shader
     glUniformMatrix4fv(modelMatLocation, 1, GL_FALSE, glm::value_ptr(getMatrix())); // shader location, count, transpose?, value pointer

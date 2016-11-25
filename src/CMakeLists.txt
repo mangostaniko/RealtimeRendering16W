@@ -40,6 +40,9 @@ set(SRC_SHADERS
     shaders/normal_mapping.vert
     shaders/normal_mapping.frag
 
+    shaders/water.vert
+    shaders/water.frag
+
     shaders/text.vert
     shaders/text.frag
     shaders/particles.vert

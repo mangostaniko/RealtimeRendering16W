@@ -55,6 +55,8 @@ bool debugDrawTransparent       = false;
 
 Texture::FilterType filterType = Texture::LINEAR_MIPMAP_LINEAR;
 
+GLuint commonShaderUniformsUBO; // uniform buffer object to share common uniform data between shaders
+
 Shader *textureShader, *waterShader;
 Shader *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader; // shadow mapping
 Shader *activeShader;
@@ -119,8 +121,8 @@ int main(int argc, char **argv)
 {
     // HANDLE COMMAND LINE PARAMETERS
 
-	windowWidth = 1920;
-	windowHeight = 1080;
+	windowWidth = 1440;
+	windowHeight = 900;
     int refresh_rate = 60;
 	bool fullscreen = 0;
 
@@ -141,7 +143,7 @@ int main(int argc, char **argv)
     }
 
     glfwWindowHint(GLFW_REFRESH_RATE, refresh_rate);
-    glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_SAMPLES, 16);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -226,32 +228,29 @@ int main(int argc, char **argv)
 
         //// SHADOW MAP PASS
         // calculate lights projection and view Matrix
-        glm::mat4 lightVP;
+		glm::mat4 lightVPMat;
 
         if (shadowsEnabled) {
-            shadowFirstPass(lightVP);
+			shadowFirstPass(lightVPMat);
         }
 
-        // Prepare lighting shader and set matrices
-        setActiveShader(textureShader);
-		glUniformMatrix4fv(activeShader->getUniformLocation("viewMat"), 1, GL_FALSE, glm::value_ptr(camera->getViewMat()));
-		glUniformMatrix4fv(activeShader->getUniformLocation("lightVP"), 1, GL_FALSE, glm::value_ptr(lightVP));
+		// set shared uniform data via Uniform Buffer Object
+		glBindBuffer(GL_UNIFORM_BUFFER, commonShaderUniformsUBO);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(camera->getViewMat()));
+		glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(camera->getProjMat()));
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-        //if (vsmShadowsEnabled) {
+		// set uniforms for shadow mapping in default textureShader
+        setActiveShader(textureShader);
+		glUniformMatrix4fv(activeShader->getUniformLocation("lightVPMat"), 1, GL_FALSE, glm::value_ptr(lightVPMat));
 		glUniform1i(activeShader->getUniformLocation("shadowMap"), 1);
         glActiveTexture(GL_TEXTURE0 + 1);
         glBindTexture(GL_TEXTURE_2D, vsmDepthMap);
-        /*}
-        else {
-			glUniform1i(activeShader->getUniformLocation("shadowMap"), 1);
-            glActiveTexture(GL_TEXTURE0 + 1);
-            glBindTexture(GL_TEXTURE_2D, depthMap);
-        }*/
 
-        //// SSAO PrePass (if enabled)
+		//// SSAO PREPASS (if enabled)
         ssaoFirstPass();
 
-        //// FINAL PASS
+		//// FINAL MAIN DRAW PASS
         //// draw with shadow mapping and ssao
         finalDrawPass();
 
@@ -325,7 +324,42 @@ void init(GLFWwindow *window)
 
     // INIT SHADERS
     textureShader = new Shader("shaders/textured_blinnphong.vert", "shaders/textured_blinnphong.frag");
+	waterShader = new Shader("shaders/water.vert", "shaders/water.frag");
     setActiveShader(textureShader); // non-trivial cost
+
+	// INIT UNIFORM BUFFER OBJECT
+	// For often reused uniform data (viewMat, ProjMat, lightData, etc.).
+	// Allows for different shader programs to access same uniforms from gpu memory block.
+	// So modifying a single buffer is enough to update specified uniforms in multiple shaders.
+	// Otherwise we would need calls to bind uniforms and assign the same data for each shader individually.
+	// This uses a very specific memory layout called std140.
+	// The compiler is not allowed to pack this layout for optimization,
+	// to ensure it stays the same for all shader programs that use it.
+	// MAKE SURE TO MAINTAIN UNIFORM BLOCK LAYOUT ACROSS ALL SHADERS FILES!
+	// THIS LAYOUT ONLY ALLOWS VECTORS TO BE VEC2 OR VEC4
+	// (VEC3 ARE PADDED, BUT DONT RELY ON GL IMPLEMENTATION FOR IT) !!
+	// ORDER OF UNIFORMS WITHIN BLOCK MUST NOT BE CHANGED !
+	GLint uboTotalSize = 2 * sizeof(glm::mat4);
+	glGenBuffers(1, &commonShaderUniformsUBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, commonShaderUniformsUBO);
+	glBufferData(GL_UNIFORM_BUFFER, uboTotalSize, NULL, GL_STATIC_DRAW); // allocate bytes of memory, no data assigned
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	// UBO binding works as follows:
+	// UBO <---> Binding Point <---> Shader Uniform Block Index
+	// Binding Points can be set explicitly in the shader block layout, thus we just need to bind:
+	// UBO <---> Binding Point
+	// Note that a single UBO can store data for multiple different shader uniform blocks
+	// by binding certain ranges of the UBO memory to different binding locations.
+	GLint uboMatricesBlockSize = 2 * sizeof(glm::mat4);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, commonShaderUniformsUBO, 0, uboMatricesBlockSize); // binding point 0, ubo offset, range
+
+	// To assign UBO data use the following:
+	//glBindBuffer(GL_UNIFORM_BUFFER, <ubo>);
+	//glBufferSubData(GL_UNIFORM_BUFFER, <offset>, <size>, &<data>);
+	//glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+
 
     // NOTE: the following initializations are intended to be used with a shader of the structure like textureShader
     // so dont activate any shader of different structure before those initializations are done
@@ -442,19 +476,6 @@ void update(float timeDelta)
 	sun->update(timeDelta);
 	//std::cout << sun->getLocation().x << " " << sun->getLocation().y << " " << sun->getLocation().z << " " << std::endl;
 
-
-	// SET LIGHT POSITION AND COLOR IN SHADERS
-
-	glUniform3f(activeShader->getUniformLocation("material.specular"), 0.2f, 0.2f, 0.2f);
-
-	glUniform3f(activeShader->getUniformLocation("light.position"),
-	            sun->getLocation().x, sun->getLocation().y, sun->getLocation().z);
-	glUniform3f(activeShader->getUniformLocation("light.ambient"),
-	            sun->getColor().x * 0.3f, sun->getColor().y * 0.3f, sun->getColor().z * 0.3f);
-	glUniform3f(activeShader->getUniformLocation("light.diffuse"),
-	            sun->getColor().x, sun->getColor().y, sun->getColor().z);
-	glUniform3f(activeShader->getUniformLocation("light.specular"),
-	            sun->getColor().x * 0.8f, sun->getColor().y * 0.8f, sun->getColor().z * 0.8f);
 }
 
 
@@ -465,6 +486,11 @@ void drawScene()
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
+	//////////////////////////////////////////////////
+	/// DEFAULT ACTIVE SHADER TEXTURED BLINN-PHONG
+	//////////////////////////////////////////////////
+	setActiveShader(textureShader);
+
 	if (debugDrawTransparent) {
 		glUniform1f(activeShader->getUniformLocation("debugDrawTransparent"), true);
     }
@@ -472,13 +498,28 @@ void drawScene()
 		glUniform1f(activeShader->getUniformLocation("debugDrawTransparent"), false);
     }
 
-    // pass viewProjection matrix to shader
-	glUniformMatrix4fv(activeShader->getUniformLocation("viewProjMat"),
-	                   1, GL_FALSE, glm::value_ptr(camera->getProjMat() * camera->getViewMat())); // count, transpose?, value pointer
+	// pass view and projection matrices to shader
+	glUniformMatrix4fv(activeShader->getUniformLocation("viewMat"),
+	                   1, GL_FALSE, glm::value_ptr(camera->getViewMat())); // count, transpose?, value pointer
+	glUniformMatrix4fv(activeShader->getUniformLocation("projMat"),
+	                   1, GL_FALSE, glm::value_ptr(camera->getProjMat()));
 
     // pass camera position to shader
 	glUniform3f(activeShader->getUniformLocation("cameraPos"),
 	            camera->getLocation().x, camera->getLocation().y, camera->getLocation().z);
+
+	// pass light position and colors to shader
+	glUniform3f(activeShader->getUniformLocation("light.position"),
+	            sun->getLocation().x, sun->getLocation().y, sun->getLocation().z);
+	glUniform3f(activeShader->getUniformLocation("light.ambient"),
+	            sun->getColor().x * 0.3f, sun->getColor().y * 0.3f, sun->getColor().z * 0.3f);
+	glUniform3f(activeShader->getUniformLocation("light.diffuse"),
+	            sun->getColor().x, sun->getColor().y, sun->getColor().z);
+	glUniform3f(activeShader->getUniformLocation("light.specular"),
+	            sun->getColor().x * 0.8f, sun->getColor().y * 0.8f, sun->getColor().z * 0.8f);
+
+	// pass common material color to shader
+	glUniform3f(activeShader->getUniformLocation("material.specular"), 0.2f, 0.2f, 0.2f);
 
     // DRAW GEOMETRY
 
@@ -490,10 +531,15 @@ void drawScene()
 	island->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
 	glEnable(GL_CULL_FACE);
 
-	ocean->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
-
 	glUniform1f(activeShader->getUniformLocation("material.shininess"), 32.f);
 	eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+
+	//////////////////////////
+	/// ACTIVE SHADER WATER
+	//setActiveShader(waterShader);
+	ocean->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+	//setActiveShader(textureShader);
+	//////////////////////////
 
     if (wireframeEnabled) {
         // disable wireframe
@@ -542,7 +588,7 @@ void shadowFirstPass(glm::mat4 &lightViewPro)
     //if (vsmShadowsEnabled) {
     glBindFramebuffer(GL_FRAMEBUFFER, vsmDepthMapFBO);
     setActiveShader(vsmDepthMapShader);
-	glUniformMatrix4fv(activeShader->getUniformLocation("lightVP"), 1, GL_FALSE, glm::value_ptr(lightViewPro));
+	glUniformMatrix4fv(activeShader->getUniformLocation("lightVPMat"), 1, GL_FALSE, glm::value_ptr(lightViewPro));
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     drawScene();
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -556,7 +602,7 @@ void shadowFirstPass(glm::mat4 &lightViewPro)
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         setActiveShader(depthMapShader);
         glClear(GL_DEPTH_BUFFER_BIT);
-		glUniformMatrix4fv(activeShader->getUniformLocation("lightVP"), 1, GL_FALSE, glm::value_ptr(lightViewPro));
+		glUniformMatrix4fv(activeShader->getUniformLocation("lightVPMat"), 1, GL_FALSE, glm::value_ptr(lightViewPro));
         drawScene();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -669,6 +715,7 @@ void newGame()
 void cleanup()
 {
     delete textureShader; textureShader = nullptr;
+	delete waterShader; waterShader = nullptr;
     delete depthMapShader; depthMapShader = nullptr;
     delete debugDepthShader; debugDepthShader = nullptr;
     delete vsmDepthMapShader; vsmDepthMapShader = nullptr;

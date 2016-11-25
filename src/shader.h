@@ -23,8 +23,7 @@ public:
     GLuint programHandle;
 
 	/// Set this as the active shader program.
-	/// Only one shader program can be active at a time in the current opengl
-	/// context.
+	/// Only one shader program can be active at a time in the current opengl context.
     void useShader() const;
 
 	/// Return location of shader uniform

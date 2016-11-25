@@ -1,4 +1,5 @@
-#version 330 core
+#version 450 core
+
 
 in vec2 texCoord;
 layout(location = 0) out vec4 outColor;

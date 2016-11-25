@@ -1,4 +1,4 @@
-#version 330 core
+#version 450 core
 
 layout (location = 0) in vec4 vertex; // xy used for position, zw used for uvs
 out vec2 texCoord;
