@@ -71,7 +71,18 @@ void Shader::loadShader(const std::string &shader, GLenum shaderType, GLuint &ha
 
 void Shader::useShader() const
 {
-    glUseProgram(programHandle);
+	glUseProgram(programHandle);
+}
+
+GLint Shader::getUniformLocation(const std::string& name)
+{
+	// if not yet cached, retrieve via glGetUniformLocation
+	bool notCached = uniforms.find(name) == uniforms.end();
+	if (notCached) {
+		GLint location = glGetUniformLocation(programHandle, name.c_str());
+		uniforms[name] = location;
+	}
+	return uniforms[name];
 }
 
 void Shader::linkShaders()

@@ -14,7 +14,7 @@ TextRenderer::TextRenderer(const std::string &fontPath, const GLuint &windowWidt
     glm::mat4 projMat = glm::ortho(0.0f, static_cast<GLfloat>(windowWidth), 0.0f, static_cast<GLfloat>(windowHeight));
     projMat = glm::translate(projMat, glm::vec3(0, 0, 1)); // closer to camera to make sure it doesnt get occluded
     textShader->useShader();
-    glUniformMatrix4fv(glGetUniformLocation(textShader->programHandle, "projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
+	glUniformMatrix4fv(textShader->getUniformLocation("projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
 
     // load FreeType glyphs for each character of 7-bit ASCII and create opengl textures from glyph bitmaps
     // the resulting Glyph structs (texture and glyph metrics) are stored in the glyphs map
@@ -49,7 +49,7 @@ void TextRenderer::renderText(const std::string &text, GLfloat x, GLfloat y, GLf
 {
     // set bindings
     textShader->useShader();
-    glUniform3f(glGetUniformLocation(textShader->programHandle, "textColor"), color.x, color.y, color.z);
+	glUniform3f(textShader->getUniformLocation("textColor"), color.x, color.y, color.z);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(vao);
 

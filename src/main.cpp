@@ -55,7 +55,8 @@ bool debugDrawTransparent       = false;
 
 Texture::FilterType filterType = Texture::LINEAR_MIPMAP_LINEAR;
 
-Shader *textureShader, *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader;
+Shader *textureShader, *waterShader;
+Shader *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader; // shadow mapping
 Shader *activeShader;
 TextRenderer *textRenderer;
 SSAOPostprocessor *ssaoPostprocessor;
@@ -64,6 +65,7 @@ Camera *camera; glm::mat4 cameraInitTransform(glm::translate(glm::mat4(1.0f), gl
 Eagle *eagle; glm::mat4 eagleInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 30, -45)));
 
 Geometry *island;
+Geometry *ocean;
 
 Light *sun; // sun start and end positions are linearly interpolated over time of day
 const glm::vec3 LIGHT_START(glm::vec3(-20, 50, -40));
@@ -232,16 +234,16 @@ int main(int argc, char **argv)
 
         // Prepare lighting shader and set matrices
         setActiveShader(textureShader);
-		glUniformMatrix4fv(glGetUniformLocation(activeShader->programHandle, "viewMat"), 1, GL_FALSE, glm::value_ptr(camera->getViewMat()));
-        glUniformMatrix4fv(glGetUniformLocation(activeShader->programHandle, "lightVP"), 1, GL_FALSE, glm::value_ptr(lightVP));
+		glUniformMatrix4fv(activeShader->getUniformLocation("viewMat"), 1, GL_FALSE, glm::value_ptr(camera->getViewMat()));
+		glUniformMatrix4fv(activeShader->getUniformLocation("lightVP"), 1, GL_FALSE, glm::value_ptr(lightVP));
 
         //if (vsmShadowsEnabled) {
-        glUniform1i(glGetUniformLocation(activeShader->programHandle, "shadowMap"), 1);
+		glUniform1i(activeShader->getUniformLocation("shadowMap"), 1);
         glActiveTexture(GL_TEXTURE0 + 1);
         glBindTexture(GL_TEXTURE_2D, vsmDepthMap);
         /*}
         else {
-            glUniform1i(glGetUniformLocation(activeShader->programHandle, "shadowMap"), 1);
+			glUniform1i(activeShader->getUniformLocation("shadowMap"), 1);
             glActiveTexture(GL_TEXTURE0 + 1);
             glBindTexture(GL_TEXTURE_2D, depthMap);
         }*/
@@ -331,6 +333,7 @@ void init(GLFWwindow *window)
     // INIT WORLD + OBJECTS
     sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), LIGHT_END, glm::vec3(1.f, 0.89f, 0.6f), glm::vec3(0.87f, 0.53f, 0.f), dayLength);
     island = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/island/island.dae");
+	ocean = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/island/water.dae");
 
     // INIT CAMERA
 	camera = new Camera(window, cameraInitTransform, glm::radians(90.0f), width/(float)height, 0.2f, 600.0f); // mat, fov, aspect, znear, zfar
@@ -440,20 +443,18 @@ void update(float timeDelta)
 	//std::cout << sun->getLocation().x << " " << sun->getLocation().y << " " << sun->getLocation().z << " " << std::endl;
 
 
-    // SET POSITION AND COLOR IN SHADERS
+	// SET LIGHT POSITION AND COLOR IN SHADERS
 
-    GLint lightPosLocation = glGetUniformLocation(activeShader->programHandle, "light.position");
-    GLint lightAmbientLocation = glGetUniformLocation(activeShader->programHandle, "light.ambient");
-    GLint lightDiffuseLocation = glGetUniformLocation(activeShader->programHandle, "light.diffuse");
-    GLint lightSpecularLocation = glGetUniformLocation(activeShader->programHandle, "light.specular");
+	glUniform3f(activeShader->getUniformLocation("material.specular"), 0.2f, 0.2f, 0.2f);
 
-    GLint materialSpecularLocation = glGetUniformLocation(activeShader->programHandle, "material.specular");
-	glUniform3f(materialSpecularLocation, 0.2f, 0.2f, 0.2f);
-
-	glUniform3f(lightPosLocation, sun->getLocation().x, sun->getLocation().y, sun->getLocation().z);
-	glUniform3f(lightAmbientLocation, sun->getColor().x * 0.3f, sun->getColor().y * 0.3f, sun->getColor().z * 0.3f);
-	glUniform3f(lightDiffuseLocation, sun->getColor().x, sun->getColor().y, sun->getColor().z);
-	glUniform3f(lightSpecularLocation, sun->getColor().x * 0.8f, sun->getColor().y * 0.8f, sun->getColor().z * 0.8f);
+	glUniform3f(activeShader->getUniformLocation("light.position"),
+	            sun->getLocation().x, sun->getLocation().y, sun->getLocation().z);
+	glUniform3f(activeShader->getUniformLocation("light.ambient"),
+	            sun->getColor().x * 0.3f, sun->getColor().y * 0.3f, sun->getColor().z * 0.3f);
+	glUniform3f(activeShader->getUniformLocation("light.diffuse"),
+	            sun->getColor().x, sun->getColor().y, sun->getColor().z);
+	glUniform3f(activeShader->getUniformLocation("light.specular"),
+	            sun->getColor().x * 0.8f, sun->getColor().y * 0.8f, sun->getColor().z * 0.8f);
 }
 
 
@@ -465,19 +466,19 @@ void drawScene()
     }
 
 	if (debugDrawTransparent) {
-		glUniform1f(glGetUniformLocation(activeShader->programHandle, "debugDrawTransparent"), true);
+		glUniform1f(activeShader->getUniformLocation("debugDrawTransparent"), true);
     }
     else {
-		glUniform1f(glGetUniformLocation(activeShader->programHandle, "debugDrawTransparent"), false);
+		glUniform1f(activeShader->getUniformLocation("debugDrawTransparent"), false);
     }
 
     // pass viewProjection matrix to shader
-    GLint viewProjMatLocation = glGetUniformLocation(activeShader->programHandle, "viewProjMat"); // get uniform location in shader
-	glUniformMatrix4fv(viewProjMatLocation, 1, GL_FALSE, glm::value_ptr(camera->getProjMat() * camera->getViewMat())); // shader location, count, transpose?, value pointer
+	glUniformMatrix4fv(activeShader->getUniformLocation("viewProjMat"),
+	                   1, GL_FALSE, glm::value_ptr(camera->getProjMat() * camera->getViewMat())); // count, transpose?, value pointer
 
     // pass camera position to shader
-    GLint cameraPosLocation = glGetUniformLocation(activeShader->programHandle, "cameraPos");
-    glUniform3f(cameraPosLocation, camera->getLocation().x, camera->getLocation().y, camera->getLocation().z);
+	glUniform3f(activeShader->getUniformLocation("cameraPos"),
+	            camera->getLocation().x, camera->getLocation().y, camera->getLocation().z);
 
     // DRAW GEOMETRY
 
@@ -485,11 +486,13 @@ void drawScene()
 
 	// we need to disable back face culling to render palm leaves which are not closed meshes
 	glDisable(GL_CULL_FACE);
-    glUniform1f(glGetUniformLocation(activeShader->programHandle, "material.shininess"), 64.f);
+	glUniform1f(activeShader->getUniformLocation("material.shininess"), 64.f);
 	island->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
 	glEnable(GL_CULL_FACE);
 
-    glUniform1f(glGetUniformLocation(activeShader->programHandle, "material.shininess"), 32.f);
+	ocean->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+
+	glUniform1f(activeShader->getUniformLocation("material.shininess"), 32.f);
 	eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
 
     if (wireframeEnabled) {
@@ -539,7 +542,7 @@ void shadowFirstPass(glm::mat4 &lightViewPro)
     //if (vsmShadowsEnabled) {
     glBindFramebuffer(GL_FRAMEBUFFER, vsmDepthMapFBO);
     setActiveShader(vsmDepthMapShader);
-    glUniformMatrix4fv(glGetUniformLocation(activeShader->programHandle, "lightVP"), 1, GL_FALSE, glm::value_ptr(lightViewPro));
+	glUniformMatrix4fv(activeShader->getUniformLocation("lightVP"), 1, GL_FALSE, glm::value_ptr(lightViewPro));
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     drawScene();
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -553,7 +556,7 @@ void shadowFirstPass(glm::mat4 &lightViewPro)
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         setActiveShader(depthMapShader);
         glClear(GL_DEPTH_BUFFER_BIT);
-        glUniformMatrix4fv(glGetUniformLocation(activeShader->programHandle, "lightVP"), 1, GL_FALSE, glm::value_ptr(lightViewPro));
+		glUniformMatrix4fv(activeShader->getUniformLocation("lightVP"), 1, GL_FALSE, glm::value_ptr(lightViewPro));
         drawScene();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -571,14 +574,14 @@ void vsmBlurPass()
     setActiveShader(blurVSMDepthShader);
 
     glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO);
-    glUniform1i(glGetUniformLocation(activeShader->programHandle, "horizontal"), horizontal);
+	glUniform1i(activeShader->getUniformLocation("horizontal"), horizontal);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, vsmDepthMap);
     RenderQuad();
     horizontal = !horizontal;
 
     glBindFramebuffer(GL_FRAMEBUFFER, vsmDepthMapFBO);
-    glUniform1i(glGetUniformLocation(activeShader->programHandle, "horizontal"), horizontal);
+	glUniform1i(activeShader->getUniformLocation("horizontal"), horizontal);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, pingpongColorMap);
     RenderQuad();
@@ -593,9 +596,9 @@ void ssaoFirstPass()
         //// SSAO PREPASS
         //// draw ssao input data (screen colors and view space positions) to framebuffer textures
         ssaoPostprocessor->bindScreenDataFramebuffer();
-        glUniform1i(glGetUniformLocation(activeShader->programHandle, "useShadows"), 0);
-        glUniform1i(glGetUniformLocation(activeShader->programHandle, "useSSAO"), 0);
-        glUniform1i(glGetUniformLocation(activeShader->programHandle, "useVSM"), 0);
+		glUniform1i(activeShader->getUniformLocation("useShadows"), 0);
+		glUniform1i(activeShader->getUniformLocation("useSSAO"), 0);
+		glUniform1i(activeShader->getUniformLocation("useVSM"), 0);
         glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         drawScene();
@@ -620,11 +623,11 @@ void finalDrawPass()
     glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUniform1i(glGetUniformLocation(activeShader->programHandle, "useShadows"), shadowsEnabled);
-    glUniform1i(glGetUniformLocation(activeShader->programHandle, "useSSAO"), ssaoEnabled);
-    glUniform1i(glGetUniformLocation(activeShader->programHandle, "useVSM"), vsmShadowsEnabled);
+	glUniform1i(activeShader->getUniformLocation("useShadows"), shadowsEnabled);
+	glUniform1i(activeShader->getUniformLocation("useSSAO"), ssaoEnabled);
+	glUniform1i(activeShader->getUniformLocation("useVSM"), vsmShadowsEnabled);
 
-    ssaoPostprocessor->bindSSAOResultTexture(glGetUniformLocation(activeShader->programHandle, "ssaoTexture"), 2);
+	ssaoPostprocessor->bindSSAOResultTexture(activeShader->getUniformLocation("ssaoTexture"), 2);
 
     drawScene();
 }
@@ -636,8 +639,8 @@ void debugShadowPass()
 
         setActiveShader(debugDepthShader);
 
-		glUniform1f(glGetUniformLocation(debugDepthShader->programHandle, "near_plane"), SM_NEAR_PLANE);
-		glUniform1f(glGetUniformLocation(debugDepthShader->programHandle, "far_plane"), SM_FAR_PLANE);
+		glUniform1f(debugDepthShader->getUniformLocation("near_plane"), SM_NEAR_PLANE);
+		glUniform1f(debugDepthShader->getUniformLocation("far_plane"), SM_FAR_PLANE);
         glActiveTexture(GL_TEXTURE0);
 
         glBindTexture(GL_TEXTURE_2D, vsmDepthMap);
@@ -678,6 +681,7 @@ void cleanup()
     delete camera; camera = nullptr;
     delete eagle; eagle = nullptr;
     delete island; island = nullptr;
+	delete ocean; ocean = nullptr;
 }
 
 

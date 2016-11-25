@@ -199,12 +199,12 @@ void SSAOPostprocessor::calulateSSAOValues(const glm::mat4 &projMat)
 {
     ssaoShader->useShader();
 
-    glUniformMatrix4fv(glGetUniformLocation(ssaoShader->programHandle, "projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
+	glUniformMatrix4fv(ssaoShader->getUniformLocation("projMat"), 1, GL_FALSE, glm::value_ptr(projMat));
 
-    GLint sampleCountLocation = glGetUniformLocation(ssaoShader->programHandle, "random_vector_array_size");
+	GLint sampleCountLocation = ssaoShader->getUniformLocation("random_vector_array_size");
     glUniform1i(sampleCountLocation, samples);
 
-    GLint viewPosTexLocation = glGetUniformLocation(ssaoShader->programHandle, "viewPosTexture");
+	GLint viewPosTexLocation = ssaoShader->getUniformLocation("viewPosTexture");
     glBindFramebuffer(GL_FRAMEBUFFER, fboScreenData);
     glUniform1i(viewPosTexLocation, 4); // bind shader location to texture unit 4
     glActiveTexture(GL_TEXTURE0 + 4); // activate texture unit 4
@@ -223,19 +223,19 @@ void SSAOPostprocessor::blurSSAOResultTexture()
 
     // filter horizontally
     glBindFramebuffer(GL_FRAMEBUFFER, fboSSAOBlurPingpong);
-    glUniform1i(glGetUniformLocation(blurShader->programHandle, "ssaoTexture"), 4);
+	glUniform1i(blurShader->getUniformLocation("ssaoTexture"), 4);
     glActiveTexture(GL_TEXTURE0 + 4);
     glBindTexture(GL_TEXTURE_2D, ssaoTexture);
-    glUniform1i(glGetUniformLocation(blurShader->programHandle, "filterHorizontally"), true);
+	glUniform1i(blurShader->getUniformLocation("filterHorizontally"), true);
 
     drawQuad();
 
     // filter vertically
     glBindFramebuffer(GL_FRAMEBUFFER, fboSSAO);
-    glUniform1i(glGetUniformLocation(blurShader->programHandle, "ssaoTexture"), 4);
+	glUniform1i(blurShader->getUniformLocation("ssaoTexture"), 4);
     glActiveTexture(GL_TEXTURE0 + 4);
     glBindTexture(GL_TEXTURE_2D, ssaoBlurredTexturePingpong);
-    glUniform1i(glGetUniformLocation(blurShader->programHandle, "filterHorizontally"), false);
+	glUniform1i(blurShader->getUniformLocation("filterHorizontally"), false);
 
     drawQuad();
 
