@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_EFFECTS_PARTICLESYSTEM_HPP
-#define SUZANNEISLAND_EFFECTS_PARTICLESYSTEM_HPP 1
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -69,5 +68,3 @@ private:
     float randomFloat();
 };
 
-
-#endif // SUZANNEISLAND_EFFECTS_PARTICLESYSTEM_HPP

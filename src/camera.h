@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_CAMERA_HPP
-#define SUZANNEISLAND_CAMERA_HPP 1
+#pragma once
 
 #define ZOOM_MIN 30.0f
 #define ZOOM_MAX 80.0f
@@ -138,5 +137,3 @@ private:
     );
 };
 
-
-#endif // SUZANNEISLAND_CAMERA_HPP

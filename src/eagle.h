@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_EAGLE_HPP
-#define SUZANNEISLAND_EAGLE_HPP 1
+#pragma once
 
 #include <glm/gtx/vector_angle.hpp>
 
@@ -59,5 +58,3 @@ private:
     bool targetDefenseActive = false;
 };
 
-
-#endif // SUZANNEISLAND_EAGLE_HPP

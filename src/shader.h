@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_SHADER_HPP
-#define SUZANNEISLAND_SHADER_HPP 1
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -51,5 +50,3 @@ private:
 
 };
 
-
-#endif // SUZANNEISLAND_SHADER_HPP

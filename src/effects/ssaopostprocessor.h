@@ -1,5 +1,4 @@
-#ifndef SSAOPOSTPROCESSOR_HPP
-#define SSAOPOSTPROCESSOR_HPP 1
+#pragma once
 
 #include <string>
 #include <vector>
@@ -75,5 +74,3 @@ public:
 private:
 };
 
-
-#endif // SSAOPOSTPROCESSOR_HPP

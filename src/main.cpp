@@ -60,9 +60,9 @@ Texture::FilterType filterType = Texture::LINEAR_MIPMAP_LINEAR;
 // i.e. the size of uniform blocks in gpu memory must be multiples of 256
 // otherwise glBindBufferRange yields error 1281 (invalid value).
 GLuint commonShaderUniformsUBO;
-GLint uboMatricesBlockSize = 256; //2 * sizeof(glm::mat4);
-GLint uboViewAndCamBlockSize = 256; //5 * sizeof(glm::vec4);
-GLint uboTotalSize = uboMatricesBlockSize + uboViewAndCamBlockSize;
+GLuint uboMatricesBlockSize = 256; //2 * sizeof(glm::mat4);
+GLuint uboViewAndCamBlockSize = 256; //5 * sizeof(glm::vec4);
+GLuint uboTotalSize = uboMatricesBlockSize + uboViewAndCamBlockSize;
 
 Shader *textureShader, *waterShader;
 Shader *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader; // shadow mapping
