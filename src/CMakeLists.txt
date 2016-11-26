@@ -27,6 +27,8 @@ set(SRC_CLASSES
     eagle.h
     eagle.cpp
 
+    effects/water_effect.h
+    effects/water_effect.cpp
     effects/ssaopostprocessor.h
     effects/ssaopostprocessor.cpp
     effects/particlesystem.h

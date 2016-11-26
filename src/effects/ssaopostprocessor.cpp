@@ -51,8 +51,8 @@ SSAOPostprocessor::SSAOPostprocessor(int windowWidth, int windowHeight, int samp
     /// other uniforms are passed to ssao shader each frame and are not included here.
     ////////////////////////////////////
 
-        ssaoShader = new Shader("shaders/ssao.vert", "shaders/ssao.frag");
-        blurShader = new Shader("shaders/blur.vert", "shaders/blur.frag");
+	ssaoShader = new Shader("shaders/ssao.vert", "shaders/ssao.frag");
+	blurShader = new Shader("shaders/blur.vert", "shaders/blur.frag");
 
     // create array of random vectors for depth sampling in ssao shader
     std::vector<glm::vec3> randomVectors;
@@ -121,8 +121,8 @@ void SSAOPostprocessor::setupFramebuffers(int windowWidth, int windowHeight)
     glBindTexture(GL_TEXTURE_2D, screenColorTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowWidth, windowHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
     // generate vertex view space position texture
@@ -141,8 +141,8 @@ void SSAOPostprocessor::setupFramebuffers(int windowWidth, int windowHeight)
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, windowWidth, windowHeight);
 
     // generate framebuffer to attach color texture + view space positions texture + depth renderbuffer
-    glGenFramebuffers(1, &fboScreenData); // generate framebuffer object layout in vram and associate handle
-    glBindFramebuffer(GL_FRAMEBUFFER, fboScreenData); // bind fbo to active framebuffer
+	glGenFramebuffers(1, &fboScreenData); // generate 1 framebuffer object id
+	glBindFramebuffer(GL_FRAMEBUFFER, fboScreenData); // first bind initializes the fbo
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screenColorTexture, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, viewPosTexture, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, screenDepthBuffer);

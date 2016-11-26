@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_SCENEOBJECT_HPP
-#define SUZANNEISLAND_SCENEOBJECT_HPP 1
+#pragma once
 
 #include <sstream>
 
@@ -224,5 +223,3 @@ inline std::string SceneObject::matrixToString(const glm::mat4 &matrix)
     return matStr.str();
 }
 
-
-#endif // SUZANNEISLAND_SCENEOBJECT_HPP

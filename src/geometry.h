@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_GEOMETRY_HPP
-#define SUZANNEISLAND_GEOMETRY_HPP 1
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -94,5 +93,3 @@ private:
     );
 };
 
-
-#endif // SUZANNEISLAND_GEOMETRY_HPP

@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_TEXTRENDERER_HPP
-#define SUZANNEISLAND_TEXTRENDERER_HPP 1
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -54,5 +53,3 @@ private:
     void loadGlyphs(const std::string &fontPath);
 };
 
-
-#endif // SUZANNEISLAND_TEXTRENDERER_HPP

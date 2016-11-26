@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_SURFACE_HPP
-#define SUZANNEISLAND_SURFACE_HPP 1
+#pragma once
 
 #include <vector>
 #include <memory>
@@ -86,5 +85,3 @@ private:
     void calculateBoundingSphere();
 };
 
-
-#endif // SUZANNEISLAND_SURFACE_HPP

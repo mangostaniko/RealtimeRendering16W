@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_LIGHT_HPP
-#define SUZANNEISLAND_LIGHT_HPP 1
+#pragma once
 
 #include "sceneobject.hpp"
 
@@ -42,5 +41,3 @@ private:
     const glm::vec3 nightColor; // color of the night (dark grey)
 };
 
-
-#endif // SUZANNEISLAND_LIGHT_HPP

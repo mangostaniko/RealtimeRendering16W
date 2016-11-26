@@ -1,5 +1,4 @@
-#ifndef SUZANNEISLAND_TEXTURE_HPP
-#define SUZANNEISLAND_TEXTURE_HPP 1
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -9,10 +8,8 @@
 #include <FreeImagePlus.h>
 
 
-//! Texture class.
-
-//! This loads an opengl texture from an image file and stores a handle to it.
-//! note: use 8 bit RGB, no alpha channel!
+/// Texture class.
+/// Creates an opengl texture from an image file and stores a handle to it.
 class Texture
 {
 	GLuint handle;
@@ -23,29 +20,29 @@ public:
 	~Texture();
 
 	enum FilterType {
-		NEAREST_MIPMAP_OFF     = 0,
-		NEAREST_MIPMAP_NEAREST = 1,
-		NEAREST_MIPMAP_LINEAR  = 2,
-		LINEAR_MIPMAP_OFF      = 3,
-		LINEAR_MIPMAP_NEAREST  = 4,
-		LINEAR_MIPMAP_LINEAR   = 5
+		NEAREST_MIPMAP_OFF     = 0, // use nearest neighbor texel color for interpolated pixel
+		NEAREST_MIPMAP_NEAREST = 1, // nearest with mipmapping (nearest mipmap level)
+		NEAREST_MIPMAP_LINEAR  = 2, // nearest with mipmapping (interpolation between mipmap levels)
+		LINEAR_MIPMAP_OFF      = 3, // use bilinear interpolation of neighboring texel colors
+		LINEAR_MIPMAP_NEAREST  = 4, // bilinear with mipmapping (nearest mipmap level)
+		LINEAR_MIPMAP_LINEAR   = 5  // bilinear with mipmapping (interpolation between mipmap levels), aka trilinear
 	};
 
-	//! binds this texture to the given opengl texture unit
+	/// binds this texture to the given opengl texture unit
 	void bind(
-	    int unit //!< [in] the opengl texture unit to bind to
+	    int unit ///< [in] the opengl texture unit to bind to
 	);
 
 	/**
 	 * @brief set texture minification and magnification filters
-	 * minification:  how to filter downsampled texture when there's not enough space
-	 * magnification: how to interpolate texture to fill remaining space
+	 * minification:  how to filter texture in case of undersampling (area too small, less pixels/samples than texels)
+	 * magnification: how to filter texture in case of oversampling (area too big, more pixels/samples than texels)
 	 * @param filterType
 	 */
 	void setFilterMode(FilterType filterType);
 
-	//! get the texture file path
-	//! \return the texture file path
+	/// get the texture file path
+	/// \return the texture file path
 	std::string getFilePath() const;
 };
 
@@ -53,10 +50,9 @@ public:
 inline Texture::Texture(const std::string &filePath_)
     : filePath(filePath_)
 {
-	glGenTextures(1, &handle);
-	// select the active texture unit of the context
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, handle);
+	glGenTextures(1, &handle); // generate texture object and get its id (object state not yet initialized)
+	glActiveTexture(GL_TEXTURE0); // select the active texture unit of the context
+	glBindTexture(GL_TEXTURE_2D, handle); // first bind to context initializes object state
 
 	// load image from file using FreeImagePlus (the FreeImage C++ wrapper)
 	fipImage img;
@@ -147,5 +143,3 @@ inline std::string Texture::getFilePath() const
 	return filePath;
 }
 
-
-#endif // SUZANNEISLAND_TEXTURE_HPP
