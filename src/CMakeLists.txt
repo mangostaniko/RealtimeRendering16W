@@ -29,8 +29,8 @@ set(SRC_CLASSES
 
     effects/water_effect.h
     effects/water_effect.cpp
-    effects/ssaopostprocessor.h
-    effects/ssaopostprocessor.cpp
+    effects/ssao_effect.h
+    effects/ssao_effect.cpp
     effects/particlesystem.h
     effects/particlesystem.cpp
 )

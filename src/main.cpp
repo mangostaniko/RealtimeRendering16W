@@ -20,7 +20,7 @@
 #include "eagle.h"
 #include "light.h"
 #include "textrenderer.h"
-#include "effects/ssaopostprocessor.h"
+#include "effects/ssao_effect.h"
 
 void init(GLFWwindow *window);
 void initSM();
@@ -68,7 +68,7 @@ Shader *textureShader, *waterShader;
 Shader *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader; // shadow mapping
 Shader *activeShader;
 TextRenderer *textRenderer;
-SSAOPostprocessor *ssaoPostprocessor;
+SSAOEffect *ssaoEffect;
 
 Camera *camera; glm::mat4 cameraInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, 50)));
 Eagle *eagle; glm::mat4 eagleInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 30, -45)));
@@ -341,7 +341,7 @@ void init(GLFWwindow *window)
     textRenderer = new TextRenderer("data/fonts/cliff.ttf", width, height);
 
     // INIT SSAO POST PROCESSOR
-    ssaoPostprocessor = new SSAOPostprocessor(width, height, 32);
+	ssaoEffect = new SSAOEffect(width, height, 32);
 
     // INIT SHADERS
     textureShader = new Shader("shaders/textured_blinnphong.vert", "shaders/textured_blinnphong.frag");
@@ -641,7 +641,7 @@ void ssaoFirstPass()
     if (ssaoEnabled) {
         //// SSAO PREPASS
         //// draw ssao input data (screen colors and view space positions) to framebuffer textures
-        ssaoPostprocessor->bindScreenDataFramebuffer();
+		ssaoEffect->bindScreenDataFramebuffer();
 		glUniform1i(activeShader->getUniformLocation("useShadows"), 0);
 		glUniform1i(activeShader->getUniformLocation("useSSAO"), 0);
 		glUniform1i(activeShader->getUniformLocation("useVSM"), 0);
@@ -651,13 +651,13 @@ void ssaoFirstPass()
 
         //// SSAO PASS
         //// draw ssao output data to framebuffer texture
-        ssaoPostprocessor->calulateSSAOValues(camera->getProjMat());
+		ssaoEffect->calulateSSAOValues(camera->getProjMat());
         setActiveShader(textureShader);
 
         //// SSAO BLUR PASS
         if (ssaoBlurEnabled) {
-            ssaoPostprocessor->blurSSAOResultTexture();
-            //ssaoPostprocessor->blurSSAOResultTexture();
+			ssaoEffect->blurSSAOResultTexture();
+			//ssaoEffect->blurSSAOResultTexture();
             setActiveShader(textureShader);
         }
     }
@@ -673,7 +673,7 @@ void finalDrawPass()
 	glUniform1i(activeShader->getUniformLocation("useSSAO"), ssaoEnabled);
 	glUniform1i(activeShader->getUniformLocation("useVSM"), vsmShadowsEnabled);
 
-	ssaoPostprocessor->bindSSAOResultTexture(activeShader->getUniformLocation("ssaoTexture"), 2);
+	ssaoEffect->bindSSAOResultTexture(activeShader->getUniformLocation("ssaoTexture"), 2);
 
     drawScene();
 }
@@ -723,7 +723,7 @@ void cleanup()
     activeShader = nullptr;
 
 	delete textRenderer; textRenderer = nullptr;
-	delete ssaoPostprocessor; ssaoPostprocessor = nullptr;
+	delete ssaoEffect; ssaoEffect = nullptr;
 
     delete camera; camera = nullptr;
     delete eagle; eagle = nullptr;
@@ -744,7 +744,7 @@ void frameBufferResize(GLFWwindow *window, int width, int height)
     windowWidth = width;
     windowHeight = height;
     glViewport(0, 0, windowWidth, windowHeight);
-    ssaoPostprocessor->setupFramebuffers(windowWidth, windowHeight);
+	ssaoEffect->setupFramebuffers(windowWidth, windowHeight);
 }
 
 

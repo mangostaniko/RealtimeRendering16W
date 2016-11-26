@@ -1,4 +1,4 @@
-#include "ssaopostprocessor.h"
+#include "ssao_effect.h"
 
 // vertex positions and uvs defining a quad. used to render the screen texture.
 static const GLfloat quadVertices[] = {
@@ -12,7 +12,7 @@ static const GLfloat quadVertices[] = {
      1.0f,  1.0f,  1.0f, 1.0f
 };
 
-SSAOPostprocessor::SSAOPostprocessor(int windowWidth, int windowHeight, int samples_)
+SSAOEffect::SSAOEffect(int windowWidth, int windowHeight, int samples_)
     : samples(samples_)
 {
 
@@ -83,7 +83,7 @@ SSAOPostprocessor::SSAOPostprocessor(int windowWidth, int windowHeight, int samp
 
 }
 
-SSAOPostprocessor::~SSAOPostprocessor()
+SSAOEffect::~SSAOEffect()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -103,7 +103,7 @@ SSAOPostprocessor::~SSAOPostprocessor()
 
 }
 
-void SSAOPostprocessor::setupFramebuffers(int windowWidth, int windowHeight)
+void SSAOEffect::setupFramebuffers(int windowWidth, int windowHeight)
 {
 
     glDeleteFramebuffers(1, &fboScreenData);
@@ -147,7 +147,7 @@ void SSAOPostprocessor::setupFramebuffers(int windowWidth, int windowHeight)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, viewPosTexture, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, screenDepthBuffer);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "ERROR in SSAOPostprocessor: ScreenData Framebuffer not complete" << std::endl;
+		std::cerr << "ERROR in SSAOEffect: ScreenData Framebuffer not complete" << std::endl;
     }
 
 
@@ -165,7 +165,7 @@ void SSAOPostprocessor::setupFramebuffers(int windowWidth, int windowHeight)
     glBindFramebuffer(GL_FRAMEBUFFER, fboSSAO); // bind fbo to active framebuffer
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoTexture, 0);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "ERROR in SSAOPostprocessor: SSAO Framebuffer not complete" << std::endl;
+		std::cerr << "ERROR in SSAOEffect: SSAO Framebuffer not complete" << std::endl;
     }
 
     // fbo for blurred ssao
@@ -187,7 +187,7 @@ void SSAOPostprocessor::setupFramebuffers(int windowWidth, int windowHeight)
 
 }
 
-void SSAOPostprocessor::bindScreenDataFramebuffer()
+void SSAOEffect::bindScreenDataFramebuffer()
 {
     glEnable(GL_DEPTH_TEST);
     glBindFramebuffer(GL_FRAMEBUFFER, fboScreenData);
@@ -195,7 +195,7 @@ void SSAOPostprocessor::bindScreenDataFramebuffer()
     glDrawBuffers(2, buffers);
 }
 
-void SSAOPostprocessor::calulateSSAOValues(const glm::mat4 &projMat)
+void SSAOEffect::calulateSSAOValues(const glm::mat4 &projMat)
 {
     ssaoShader->useShader();
 
@@ -217,7 +217,7 @@ void SSAOPostprocessor::calulateSSAOValues(const glm::mat4 &projMat)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAOPostprocessor::blurSSAOResultTexture()
+void SSAOEffect::blurSSAOResultTexture()
 {
     blurShader->useShader();
 
@@ -242,7 +242,7 @@ void SSAOPostprocessor::blurSSAOResultTexture()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAOPostprocessor::bindSSAOResultTexture(GLint ssaoTexShaderLocation, GLuint textureUnit)
+void SSAOEffect::bindSSAOResultTexture(GLint ssaoTexShaderLocation, GLuint textureUnit)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, fboSSAO);
     glUniform1i(ssaoTexShaderLocation, textureUnit);
@@ -251,7 +251,7 @@ void SSAOPostprocessor::bindSSAOResultTexture(GLint ssaoTexShaderLocation, GLuin
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAOPostprocessor::drawQuad()
+void SSAOEffect::drawQuad()
 {
     glDisable(GL_DEPTH_TEST); // no need for depth testing since we just draw a single quad
     glBindVertexArray(screenQuadVAO);

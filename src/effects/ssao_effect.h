@@ -13,12 +13,12 @@
 
 
 /**
- * @brief The SSAOPostprocessor class facilitates Screen Space Ambient Occlusion
+ * @brief The SSAOEffect class facilitates Screen Space Ambient Occlusion
  * using a two pass rendering pipeline, where in the first pass the screen colors
  * and other information are rendered to textures to allow for postprocessing,
  * and in the second pass the postprocessed texture is rendered to a screen filling quad.
  */
-class SSAOPostprocessor
+class SSAOEffect
 {
     GLuint fboScreenData, screenColorTexture, viewPosTexture, screenDepthBuffer;
     GLuint fboSSAO, ssaoTexture;
@@ -37,8 +37,8 @@ class SSAOPostprocessor
     void drawQuad();
 
 public:
-    SSAOPostprocessor(int windowWidth, int windowHeight, int samples_);
-    ~SSAOPostprocessor();
+	SSAOEffect(int windowWidth, int windowHeight, int samples_);
+	~SSAOEffect();
 
     /**
      * @brief setup framebuffers and their screen filling texture or renderbuffer attachments
