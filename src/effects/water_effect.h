@@ -19,7 +19,7 @@
 /// two textures of the scene at different camera angles for reflection and refraction:
 /// For the reflection texture we render the scene above the water surface from below, and invert the y sampling.
 /// For the refraction texture we render the scene below the water surface from above (maybe at an inclined angle).
-/// These textures are distorted to create a rippling effect.
+/// The texture sampling is distorted to create a rippling effect.
 /// The fresnel effect is modelled to attenuate reflection based on viewing angle to surface normal.
 class WaterEffect
 {

@@ -329,6 +329,17 @@ void init(GLFWwindow *window)
 	// but we need all the color values of the fragments for blending.
 	//glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	// Enable clipping plane 0 for vertex clipping, to limit rendering to parts of scene.
+	// this is set individually in each vertex shader via gl_ClipDistance[0].
+	// plane is defined as oriented distance from origin, via a normalized direction vector and a distance.
+	// we check if parallel component (cosine) of vertex is beyond the distance, i.e. dot(vertpos, direction) > d.
+	// using negative plane distance in a vec4 (x,y,z,-d) the dot product will be the offset of vertpos distance to plane distance
+	// thus simply check dot(vertpos, direction) > 0 to see if we are beyond or before the plane in oriented direction.
+	// gl_ClipDistance[0] takes exactly the result of such a dot product clipping all that lies before the plane.
+	// HOWEVER it defines the plane pointing towards the origin thus the result must be inverted.
+	// the values are then interpolated for the fragment shader.
+	glEnable(GL_CLIP_DISTANCE0);
+
     // INIT SHADOW MAPPING (FBO, Texture, Shader)
     initSM();
 

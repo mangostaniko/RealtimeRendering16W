@@ -34,6 +34,17 @@ void main()
 {
     gl_Position = projMat * viewMat * modelMat * vec4(position, 1);
 
+    // use clipping plane 0 for vertex clipping
+    // we define clipping plane as normalized direction vector and distance
+    // we check if parallel component (cosine) of vertex is beyond the distance, i.e. dot(vertpos, direction) > d.
+    // using negative plane distance in a vec4 (x,y,z,-d) the dot product will be the offset of vertpos distance to plane distance
+    // thus simply check dot(vertpos, direction) > 0 to see if we are beyond or before the plane in oriented direction.
+    // gl_ClipDistance[0] takes exactly the result of such a dot product clipping all that lies before the plane.
+    // HOWEVER it defines the plane pointing towards the origin thus the result must be inverted.
+    // the values are then interpolated for the fragment shader.
+    vec4 clippingPlane0 = vec4(0, 1, 0, -18);
+    gl_ClipDistance[0] = -dot(modelMat * vec4(position, 1), clippingPlane0);
+
     P = (modelMat * vec4(position, 1)).xyz;
     N = normalMat * normal;
 
