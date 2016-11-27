@@ -1,45 +1,53 @@
 #include "water_effect.h"
 
-WaterEffect::WaterEffect(int windowWidth, int windowHeight)
+WaterEffect::WaterEffect(int windowWidth, int windowHeight, float reflectionResolutionFactor, float refractionResolutionFactor,
+                         const std::string& waterDistortionDuDvMapPath)
     : windowWidth(windowWidth)
     , windowHeight(windowHeight)
 {
 
-    ////////////////////////////////////
-    /// SETUP FRAMEBUFFERS
+	REFLECTION_RESOLUTION_X = windowWidth * reflectionResolutionFactor;
+	REFLECTION_RESOLUTION_Y = windowHeight * reflectionResolutionFactor;
+	REFRACTION_RESOLUTION_X = windowWidth * refractionResolutionFactor;
+	REFRACTION_RESOLUTION_Y = windowHeight * refractionResolutionFactor;
+
+	////////////////////////////////////
+	/// SETUP FRAMEBUFFERS
 	/// setup framebuffers with color and depth attachments.
 	/// the depth attachment is used directly by opengl for depth testing,
 	/// only reason to use renderbuffer instead of texture is that it is more efficient
 	/// but we can do no sampling, we just render to it (write-only)
-    ////////////////////////////////////
+	////////////////////////////////////
 
 	fboReflection = createFrameBuffer();
-	reflectionColorTexture = createColorTextureAttachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
-	reflectionDepthBuffer = createDepthRenderbufferAttachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
+	reflectionColorTexture = createColorTextureAttachment(REFLECTION_RESOLUTION_X, REFLECTION_RESOLUTION_Y);
+	reflectionDepthBuffer = createDepthRenderbufferAttachment(REFLECTION_RESOLUTION_X, REFLECTION_RESOLUTION_Y);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cerr << "ERROR in WaterEffect: Reflection Framebuffer not complete" << std::endl;
 	bindDefaultFrameBuffer();
 
 	fboRefraction = createFrameBuffer();
-	refractionColorTexture = createColorTextureAttachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
-	refractionDepthTexture = createDepthTextureAttachment(REFLECTION_WIDTH, REFLECTION_HEIGHT);
-
+	refractionColorTexture = createColorTextureAttachment(REFRACTION_RESOLUTION_X, REFRACTION_RESOLUTION_Y);
+	refractionDepthTexture = createDepthTextureAttachment(REFRACTION_RESOLUTION_X, REFRACTION_RESOLUTION_Y);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cerr << "ERROR in WaterEffect: Refraction Framebuffer not complete" << std::endl;
 	bindDefaultFrameBuffer();
 
-    ////////////////////////////////////
+	////////////////////////////////////
 	/// SETUP WATER SHADERS
 	/// uniforms are not assigned here since they are updated each frame
-    ////////////////////////////////////
+	////////////////////////////////////
 
 	waterShader = new Shader("shaders/water.vert", "shaders/water.frag");
+
+	waterDistortionDuDvMap = new Texture(waterDistortionDuDvMapPath);
+	std::cout << "loaded texture: " << waterDistortionDuDvMapPath << std::endl;
 
 }
 
 WaterEffect::~WaterEffect()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glDeleteFramebuffers(1, &fboReflection);
 	glDeleteTextures(1, &reflectionColorTexture);
@@ -67,18 +75,39 @@ void WaterEffect::bindDefaultFrameBuffer()
 	glViewport(0, 0, windowWidth, windowHeight);
 }
 
+Shader *WaterEffect::setupWaterShader()
+{
+	waterShader->useShader();
+
+	// bind reflection texture to texture location 0 of water shader
+	glBindFramebuffer(GL_FRAMEBUFFER, fboReflection);
+	glUniform1i(waterShader->getUniformLocation("reflectionTexture"), 0);
+	glActiveTexture(GL_TEXTURE0 + 0);
+	glBindTexture(GL_TEXTURE_2D, reflectionColorTexture);
+
+	// bind refraction texture to texture location 1 of water shader
+	glBindFramebuffer(GL_FRAMEBUFFER, fboRefraction);
+	glUniform1i(waterShader->getUniformLocation("refractionTexture"), 1);
+	glActiveTexture(GL_TEXTURE0 + 1);
+	glBindTexture(GL_TEXTURE_2D, refractionColorTexture);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// bind water distortion du/dv map to texture location 2 of water shader
+	glUniform1i(waterShader->getUniformLocation("waterDistortionDuDvMap"), 2);
+	waterDistortionDuDvMap->bind(2);
+
+	return waterShader;
+}
+
 GLuint WaterEffect::createFrameBuffer()
 {
 	GLuint fbo;
 	glGenFramebuffers(1, &fbo); // generate 1 framebuffer object and get its id
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo); // first bind to context initializes fbo state
 	// fragment output location 0 will draw to color attachment 0 of current framebuffer
-	GLenum targetColorBufferAttachments[] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, targetColorBufferAttachments);
+	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		std::cerr << "ERROR in WaterEffect: Framebuffer not complete" << std::endl;
-	}
 	return fbo; // return the fbo id
 }
 

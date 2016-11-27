@@ -14,11 +14,11 @@ in vec4 PViewSpace;
 layout(std140, binding = 1) uniform LightAndCamera
 {
     //                     // offset   // byte size
-    vec4 lightPos;         // 0        // 16 (4*4, since 4 byte per float, 4 float per vec
+    vec4 lightWorldPos;    // 0        // 16 (4*4, since 4 byte per float, 4 float per vec
     vec4 lightAmbient;     // 16       // 16
     vec4 lightDiffuse;     // 32       // 16
     vec4 lightSpecular;    // 48       // 16
-    vec4 cameraPos;        // 64       // 16
+    vec4 cameraWorldPos;   // 64       // 16
     //                     // 80 (block total bytes)
 };
 
@@ -34,7 +34,7 @@ uniform sampler2D ssaoTexture; // texture unit 2
 uniform bool useShadows;
 uniform bool useVSM;
 uniform bool useSSAO;
-uniform bool debugDrawTransparent;
+uniform bool drawTransparent;
 
 float calcShadow(vec4 lightSpacePos)
 {
@@ -50,7 +50,7 @@ float calcShadow(vec4 lightSpacePos)
     }
 
     // Bias to prevent Shadow Acne
-    float bias = max(0.005 * (1.0 - dot(normalize(N), normalize(lightPos.xyz - P))), 0.0025);
+    float bias = max(0.005 * (1.0 - dot(normalize(N), normalize(lightWorldPos.xyz - P))), 0.0025);
 
     //float shadow = currentZ - bias > closestZ ? 1.0 : 0.0;
 
@@ -102,8 +102,8 @@ void main()
 {
     // Normalize normal, light and view vectors
     vec3 normal = normalize(N);
-    vec3 lightDir = normalize(lightPos.xyz - P);
-    vec3 viewDir = normalize(cameraPos.xyz - P);
+    vec3 lightDir = normalize(lightWorldPos.xyz - P);
+    vec3 viewDir = normalize(cameraWorldPos.xyz - P);
 
     // if texture has rgb only, alpha is set to 1.
     // if there is no texture, all values are 0.
@@ -150,9 +150,8 @@ void main()
         color = ambient + diffuse + specular;
     }
 
-    if (debugDrawTransparent) {
+    if (drawTransparent)
         color.a = color.a * 0.5;
-    }
     outColor = vec4((AO*AO * color).rgb, color.a);
 
     outViewSpacePos = PViewSpace;

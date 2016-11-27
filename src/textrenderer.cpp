@@ -10,7 +10,7 @@ TextRenderer::TextRenderer(const std::string &fontPath, const GLuint &windowWidt
 
     // compile and configure text shader
     // note that we use an orthographic projection matrix defining the origin at the bottom left of the screen
-        textShader = new Shader("shaders/text.vert", "shaders/text.frag");
+	textShader = new Shader("shaders/text.vert", "shaders/text.frag");
     glm::mat4 projMat = glm::ortho(0.0f, static_cast<GLfloat>(windowWidth), 0.0f, static_cast<GLfloat>(windowHeight));
     projMat = glm::translate(projMat, glm::vec3(0, 0, 1)); // closer to camera to make sure it doesnt get occluded
     textShader->useShader();

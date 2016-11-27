@@ -206,8 +206,8 @@ void SSAOEffect::calulateSSAOValues(const glm::mat4 &projMat)
 
 	GLint viewPosTexLocation = ssaoShader->getUniformLocation("viewPosTexture");
     glBindFramebuffer(GL_FRAMEBUFFER, fboScreenData);
-    glUniform1i(viewPosTexLocation, 4); // bind shader location to texture unit 4
-    glActiveTexture(GL_TEXTURE0 + 4); // activate texture unit 4
+	glUniform1i(viewPosTexLocation, 0); // bind texture unit 0 to texture location 0 of ssao shader
+	glActiveTexture(GL_TEXTURE0 + 0); // activate texture unit 0
     glBindTexture(GL_TEXTURE_2D, viewPosTexture); // bind texture to active texture unit
 
     glBindFramebuffer(GL_FRAMEBUFFER, fboSSAO);
@@ -223,8 +223,8 @@ void SSAOEffect::blurSSAOResultTexture()
 
     // filter horizontally
     glBindFramebuffer(GL_FRAMEBUFFER, fboSSAOBlurPingpong);
-	glUniform1i(blurShader->getUniformLocation("ssaoTexture"), 4);
-    glActiveTexture(GL_TEXTURE0 + 4);
+	glUniform1i(blurShader->getUniformLocation("ssaoTexture"), 0); // bind texture unit 0 to texture location 0 of blur shader
+	glActiveTexture(GL_TEXTURE0 + 0);
     glBindTexture(GL_TEXTURE_2D, ssaoTexture);
 	glUniform1i(blurShader->getUniformLocation("filterHorizontally"), true);
 
@@ -232,8 +232,8 @@ void SSAOEffect::blurSSAOResultTexture()
 
     // filter vertically
     glBindFramebuffer(GL_FRAMEBUFFER, fboSSAO);
-	glUniform1i(blurShader->getUniformLocation("ssaoTexture"), 4);
-    glActiveTexture(GL_TEXTURE0 + 4);
+	glUniform1i(blurShader->getUniformLocation("ssaoTexture"), 0); // bind texture unit 0 to texture location 0 of blur shader
+	glActiveTexture(GL_TEXTURE0 + 0);
     glBindTexture(GL_TEXTURE_2D, ssaoBlurredTexturePingpong);
 	glUniform1i(blurShader->getUniformLocation("filterHorizontally"), false);
 

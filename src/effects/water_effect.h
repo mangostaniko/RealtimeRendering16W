@@ -10,7 +10,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../shader.h"
-
+#include "../texture.hpp"
 
 /// WaterEffect
 /// This is used to create a real-time reflecting and refracting
@@ -26,34 +26,35 @@ class WaterEffect
 
 private:
 
-	// smaller texture size will lead to blurrier reflection
-	int REFLECTION_WIDTH = 320;
-	int REFLECTION_HEIGHT = 180;
-
-	int REFRACTION_WIDTH = 1280;
-	int REFRACTION_HEIGHT = 720;
+	// smaller texture sizes will lead to blurrier reflection / refraction
+	int REFLECTION_RESOLUTION_X;
+	int REFLECTION_RESOLUTION_Y;
+	int REFRACTION_RESOLUTION_X;
+	int REFRACTION_RESOLUTION_Y;
 
 	GLuint fboReflection, reflectionColorTexture, reflectionDepthBuffer;
 	GLuint fboRefraction, refractionColorTexture, refractionDepthTexture;
 
 	Shader *waterShader = nullptr;
+	Texture *waterDistortionDuDvMap = nullptr;
 
 	int windowWidth, windowHeight;
 
 
 public:
-	WaterEffect(int windowWidth, int windowHeight);
+	/// reflectionResolutionFactor and refractionResolutionFactor will be used to determine
+	/// size of reflection/refraction texture as percentage of screen resolution. values should be in [0,1].
+	WaterEffect(int windowWidth, int windowHeight, float reflectionResolutionFactor, float refractionResolutionFactor,
+	            const std::string& waterDistortionDuDvMapPath);
 	~WaterEffect();
 
-	inline void bindReflectionFrameBuffer() { bindFrameBuffer(fboReflection, REFLECTION_WIDTH, REFLECTION_HEIGHT); }
-	inline void bindRefractionFrameBuffer() { bindFrameBuffer(fboRefraction, REFRACTION_WIDTH, REFRACTION_HEIGHT); }
+	inline void bindReflectionFrameBuffer() { bindFrameBuffer(fboReflection, REFLECTION_RESOLUTION_X, REFLECTION_RESOLUTION_Y); }
+	inline void bindRefractionFrameBuffer() { bindFrameBuffer(fboRefraction, REFRACTION_RESOLUTION_X, REFRACTION_RESOLUTION_Y); }
 
 	void bindFrameBuffer(GLuint frameBuffer, int width, int height);
 	void bindDefaultFrameBuffer();
 
-	inline GLuint getReflectionTexture() { return reflectionColorTexture; }
-	inline GLuint getRefractionTexture() { return refractionColorTexture; }
-	inline GLuint getRefractionDepthTexture() { return refractionDepthTexture; }
+	Shader *setupWaterShader();
 
 
 private:

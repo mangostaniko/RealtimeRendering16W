@@ -15,10 +15,12 @@ out vec4 PViewSpace;
 // uniforms use the same value for all vertices
 uniform mat4 modelMat;
 uniform mat3 normalMat;
+uniform vec4 clippingPlane;
 uniform mat4 lightVPMat;
+uniform vec2 useYMirroredCamera; // first value is a bool (> 0 enabled, <= 0 disabled), second value is y mirror position
 
 // uniforms shared with other shaders via a Uniform Buffer Object
-// note: no need to prepend "Matrices" block name when accessing these uniforms
+// note: no need to prepend block name when accessing these uniforms
 // std140 is the gpu memory layout for uniform blocks.
 // the compiler is not allowed to pack this layout for optimization,
 // to ensure it stays the same for all shader programs that use it.
@@ -37,7 +39,31 @@ layout(std140, binding = 0) uniform Matrices
 
 void main()
 {
+
+    mat4 camMat = inverse(viewMat);
+    // use mirrored camera to draw surface as if reflected from water surface
+    // just mirror all camera matrix vectors in y direction, for position mirror and increase y by water surface y.
+    if (useYMirroredCamera.x > 0) { // x component is used as boolean
+        camMat[0] = vec4(reflect(camMat[0].xyz, vec3(0,1,0)), 0);
+        camMat[1] = vec4(reflect(camMat[1].xyz, vec3(0,1,0)), 0);
+        camMat[2] = vec4(reflect(camMat[2].xyz, vec3(0,1,0)), 0);
+        camMat[3] = vec4(reflect(camMat[3].xyz, vec3(0,1,0)), 1);
+        camMat[3].y = camMat[3].y + useYMirroredCamera.y;
+    }
+    mat4 viewMat = inverse(camMat);
+
+
     gl_Position = projMat * viewMat * modelMat * vec4(position, 1);
+
+    // use clipping plane 0 for vertex clipping
+    // we define clipping plane as normalized direction vector and distance
+    // we check if parallel component (cosine) of vertex is beyond the distance, i.e. dot(vertpos, direction) > d.
+    // using negative plane distance in a vec4 (x,y,z,-d) the dot product will be the offset of vertpos distance to plane distance
+    // thus simply check dot(vertpos, direction) > 0 to see if we are beyond or before the plane in oriented direction.
+    // gl_ClipDistance[0] takes exactly the result of such a dot product clipping all that lies before the plane.
+    // HOWEVER it defines the plane pointing towards the origin thus the result must be inverted.
+    // the values are then interpolated for the fragment shader.
+    gl_ClipDistance[0] = -dot(modelMat * vec4(position, 1), clippingPlane);
 
     P = (modelMat * vec4(position, 1)).xyz;
     N = normalMat * normal;
