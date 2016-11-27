@@ -2,11 +2,13 @@
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
+layout(location = 2) in vec2 uv;
 
 // these will be interpolated by the gpu
 // the interpolated values can be accessed by same name in fragment shader
 out vec3 P;
 out vec3 N;
+out vec2 texCoord;
 out vec4 clipSpacePos;
 
 // uniforms use the same value for all vertices
@@ -38,5 +40,6 @@ void main()
 
     P = (modelMat * vec4(position, 1)).xyz;
     N = normalMat * normal;
+    texCoord = uv;
 
 }

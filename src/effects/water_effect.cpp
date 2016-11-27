@@ -1,15 +1,17 @@
 #include "water_effect.h"
 
 WaterEffect::WaterEffect(int windowWidth, int windowHeight, float reflectionResolutionFactor, float refractionResolutionFactor,
-                         const std::string& waterDistortionDuDvMapPath)
+                         const std::string& waterDistortionDuDvMapPath, float waveAmplitude, float waveSpeed)
     : windowWidth(windowWidth)
     , windowHeight(windowHeight)
+    , waveAmplitude(waveAmplitude)
+    , waveSpeed(waveSpeed)
 {
 
-	REFLECTION_RESOLUTION_X = windowWidth * reflectionResolutionFactor;
-	REFLECTION_RESOLUTION_Y = windowHeight * reflectionResolutionFactor;
-	REFRACTION_RESOLUTION_X = windowWidth * refractionResolutionFactor;
-	REFRACTION_RESOLUTION_Y = windowHeight * refractionResolutionFactor;
+	reflectionResolutionX = windowWidth * reflectionResolutionFactor;
+	reflectionResolutionY = windowHeight * reflectionResolutionFactor;
+	refractionResolutionX = windowWidth * refractionResolutionFactor;
+	refractionResolutionY = windowHeight * refractionResolutionFactor;
 
 	////////////////////////////////////
 	/// SETUP FRAMEBUFFERS
@@ -20,15 +22,15 @@ WaterEffect::WaterEffect(int windowWidth, int windowHeight, float reflectionReso
 	////////////////////////////////////
 
 	fboReflection = createFrameBuffer();
-	reflectionColorTexture = createColorTextureAttachment(REFLECTION_RESOLUTION_X, REFLECTION_RESOLUTION_Y);
-	reflectionDepthBuffer = createDepthRenderbufferAttachment(REFLECTION_RESOLUTION_X, REFLECTION_RESOLUTION_Y);
+	reflectionColorTexture = createColorTextureAttachment(reflectionResolutionX, reflectionResolutionY);
+	reflectionDepthBuffer = createDepthRenderbufferAttachment(reflectionResolutionX, reflectionResolutionY);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cerr << "ERROR in WaterEffect: Reflection Framebuffer not complete" << std::endl;
 	bindDefaultFrameBuffer();
 
 	fboRefraction = createFrameBuffer();
-	refractionColorTexture = createColorTextureAttachment(REFRACTION_RESOLUTION_X, REFRACTION_RESOLUTION_Y);
-	refractionDepthTexture = createDepthTextureAttachment(REFRACTION_RESOLUTION_X, REFRACTION_RESOLUTION_Y);
+	refractionColorTexture = createColorTextureAttachment(refractionResolutionX, refractionResolutionY);
+	refractionDepthTexture = createDepthTextureAttachment(refractionResolutionX, refractionResolutionY);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cerr << "ERROR in WaterEffect: Refraction Framebuffer not complete" << std::endl;
 	bindDefaultFrameBuffer();
@@ -42,6 +44,8 @@ WaterEffect::WaterEffect(int windowWidth, int windowHeight, float reflectionReso
 
 	waterDistortionDuDvMap = new Texture(waterDistortionDuDvMapPath);
 	std::cout << "loaded texture: " << waterDistortionDuDvMapPath << std::endl;
+
+	waveTimeBasedShift = 0;
 
 }
 
@@ -91,13 +95,23 @@ Shader *WaterEffect::setupWaterShader()
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, refractionColorTexture);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	bindDefaultFrameBuffer();
 
 	// bind water distortion du/dv map to texture location 2 of water shader
 	glUniform1i(waterShader->getUniformLocation("waterDistortionDuDvMap"), 2);
 	waterDistortionDuDvMap->bind(2);
 
+	// other uniforms
+	glUniform1f(waterShader->getUniformLocation("waveAmplitude"), waveAmplitude);
+	glUniform1f(waterShader->getUniformLocation("waveTimeBasedShift"), waveTimeBasedShift);
+
 	return waterShader;
+}
+
+void WaterEffect::updateWaves(float deltaT)
+{
+	waveTimeBasedShift += waveSpeed * deltaT;
+	waveTimeBasedShift = std::fmod(waveTimeBasedShift, 1.0f); // floating point modulo, % is only for integers
 }
 
 GLuint WaterEffect::createFrameBuffer()

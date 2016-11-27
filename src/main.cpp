@@ -303,7 +303,7 @@ void init(GLFWwindow *window)
 
 	// INIT EFFECTS
 	ssaoEffect = new SSAOEffect(width, height, 32);
-	waterEffect = new WaterEffect(width, height, 0.5, 0.8, "data/models/water/waterDistortionDuDv.png");
+	waterEffect = new WaterEffect(width, height, 0.5, 0.8, "data/models/water/waterDistortionDuDv.png", 0.02, 0.03);
 
 	// INIT SHADERS
 	textureShader = new Shader("shaders/textured_blinnphong.vert", "shaders/textured_blinnphong.frag");
@@ -459,6 +459,8 @@ void update(float timeDelta)
 
 	sun->update(timeDelta);
 	//std::cout << sun->getLocation().x << " " << sun->getLocation().y << " " << sun->getLocation().z << " " << std::endl;
+
+	waterEffect->updateWaves(timeDelta);
 
 	///////////////////////////////////////////////////////////
 	//// SET SHARED UNIFORM DATA VIA UNIFORM BUFFER OBJECT ////

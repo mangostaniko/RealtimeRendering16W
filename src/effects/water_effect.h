@@ -27,16 +27,17 @@ class WaterEffect
 private:
 
 	// smaller texture sizes will lead to blurrier reflection / refraction
-	int REFLECTION_RESOLUTION_X;
-	int REFLECTION_RESOLUTION_Y;
-	int REFRACTION_RESOLUTION_X;
-	int REFRACTION_RESOLUTION_Y;
+	int reflectionResolutionX;
+	int reflectionResolutionY;
+	int refractionResolutionX;
+	int refractionResolutionY;
 
 	GLuint fboReflection, reflectionColorTexture, reflectionDepthBuffer;
 	GLuint fboRefraction, refractionColorTexture, refractionDepthTexture;
 
 	Shader *waterShader = nullptr;
 	Texture *waterDistortionDuDvMap = nullptr;
+	float waveAmplitude, waveSpeed, waveTimeBasedShift;
 
 	int windowWidth, windowHeight;
 
@@ -45,16 +46,18 @@ public:
 	/// reflectionResolutionFactor and refractionResolutionFactor will be used to determine
 	/// size of reflection/refraction texture as percentage of screen resolution. values should be in [0,1].
 	WaterEffect(int windowWidth, int windowHeight, float reflectionResolutionFactor, float refractionResolutionFactor,
-	            const std::string& waterDistortionDuDvMapPath);
+	            const std::string& waterDistortionDuDvMapPath, float waveAmplitude, float waveSpeed);
 	~WaterEffect();
 
-	inline void bindReflectionFrameBuffer() { bindFrameBuffer(fboReflection, REFLECTION_RESOLUTION_X, REFLECTION_RESOLUTION_Y); }
-	inline void bindRefractionFrameBuffer() { bindFrameBuffer(fboRefraction, REFRACTION_RESOLUTION_X, REFRACTION_RESOLUTION_Y); }
+	inline void bindReflectionFrameBuffer() { bindFrameBuffer(fboReflection, reflectionResolutionX, reflectionResolutionY); }
+	inline void bindRefractionFrameBuffer() { bindFrameBuffer(fboRefraction, refractionResolutionX, refractionResolutionY); }
 
 	void bindFrameBuffer(GLuint frameBuffer, int width, int height);
 	void bindDefaultFrameBuffer();
 
 	Shader *setupWaterShader();
+
+	void updateWaves(float deltaT);
 
 
 private:

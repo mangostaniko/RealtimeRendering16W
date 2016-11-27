@@ -100,10 +100,6 @@ float shadowVSM(vec4 lightSpacePos)
 
 void main()
 {
-    // Normalize normal, light and view vectors
-    vec3 normal = normalize(N);
-    vec3 lightDir = normalize(lightWorldPos.xyz - P);
-    vec3 viewDir = normalize(cameraWorldPos.xyz - P);
 
     // if texture has rgb only, alpha is set to 1.
     // if there is no texture, all values are 0.
@@ -121,6 +117,14 @@ void main()
         discard;
     }
 
+
+    // BLINN-PHONG ILLUMINATION
+
+    // Normalize normal, light and view vectors
+    vec3 normal = normalize(N);
+    vec3 lightDir = normalize(lightWorldPos.xyz - P);
+    vec3 viewDir = normalize(cameraWorldPos.xyz - P);
+
     // Diffuse
     vec4 diffuse = max(dot(normal, lightDir), 0.0f) * diffuseColor * lightDiffuse;
 
@@ -131,6 +135,9 @@ void main()
     vec3 halfVec = normalize(lightDir + viewDir); // half vector of light and view vectors
     vec4 specularColor = vec4(1.0f); //texture(specularTexture, texCoord).rgb;
     vec4 specular = pow(max(dot(halfVec, normal), 0.0f), material.shininess) * lightSpecular * vec4(material.specular, 1);
+
+
+    // APPLY EFFECTS
 
     float AO = 1;
     if (useSSAO) { AO = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0)).r; }
