@@ -75,7 +75,7 @@ target_link_libraries(
     ${OPENGL_LIBRARIES}
     ${GLEW_LIBRARIES}
     ${GLFW_LIBRARIES}
-    ${FreeImage_LIBRARIES}
+    ${FREEIMAGEPLUS_LIBRARIES}
     ${ASSIMP_LIBRARIES}
     ${FREETYPE_LIBRARIES}
 )

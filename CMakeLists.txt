@@ -32,7 +32,7 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(GLFW REQUIRED)
 find_package(GLM REQUIRED)
-find_package(FreeImage REQUIRED)
+find_package(FreeImagePlus REQUIRED)
 find_package(Assimp REQUIRED)
 find_package(Freetype REQUIRED)
 
@@ -42,7 +42,7 @@ include_directories(
     ${OPENGL_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
     ${GLFW_INCLUDE_DIRS}
-    ${FreeImage_INCLUDE_DIR}
+    ${FREEIMAGEPLUS_INCLUDE_DIRS}
     ${ASSIMP_INCLUDE_DIRS}
     ${FREETYPE_INCLUDE_DIRS}
 )

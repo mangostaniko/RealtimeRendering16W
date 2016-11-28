@@ -1,5 +1,8 @@
+#.rst:
 #
+# ===========
 # Find Assimp
+# ===========
 #
 # Try to find Assimp: Open Asset Import Library.
 #
@@ -19,11 +22,11 @@
 # Additional modules
 #include(FindPackageHandleStandardArgs)
 include(ArchBitSize)
+include(XPlatform)
 
-SET(_PF86 "PROGRAMFILES(x86)")
+
+Set(_PF86 "PROGRAMFILES(x86)")
 SET(ASSIMP_SEARCH_PATHS
-    # Can be set as this module's argument
-    ${ASSIMP_ROOT_DIR}
     # Top project's local external libraries
     ${CMAKE_SOURCE_DIR}/external/assimp
     # Current project's local external libraries
@@ -31,18 +34,28 @@ SET(ASSIMP_SEARCH_PATHS
     # Unix like systems
     /usr/local /usr /opt
     # Windows specific
-    $ENV{PROGRAMFILES}/ASSIMP $ENV{_PF86}/ASSIMP
+    "$ENV{PROGRAMFILES}"
+    "$ENV{_PF86}"
+    "$ENV{SYSTEMDRIVE}"
     # MacOS specific
     ~/Library/Frameworks /Library/Frameworks
     # Other exotic options (Fink, DarwinPorts & Blastwave)
     /sw /opt/local /opt/csw
 )
 
-FIND_PATH(ASSIMP_ROOT_DIR include/assimp/version.h
-    PATH_SUFFIXES
-        assimp
-    PATHS
-        ${ASSIMP_SEARCH_PATHS}
+if (NOT DEFINED ASSIMP_ROOT_DIR)
+    FIND_PATH(ASSIMP_ROOT_DIR include/assimp/version.h
+        PATH_SUFFIXES
+            assimp ASSIMP
+        PATHS
+            ${ASSIMP_SEARCH_PATHS}
+    )
+endif (NOT DEFINED ASSIMP_ROOT_DIR)
+
+SET(ASSIMP_SEARCH_PATHS
+    ${ASSIMP_SEARCH_PATHS}
+    # Can be set as this module's argument
+    ${ASSIMP_ROOT_DIR}
 )
 
 FIND_PATH(ASSIMP_INCLUDE_DIR
@@ -56,117 +69,99 @@ FIND_PATH(ASSIMP_INCLUDE_DIR
         "The directory where assimp's development headers reside"
 )
 
-# Check if on decent OS
-if (UNIX)
-    SET(CMAKE_FIND_LIBRARY_PREFIXES "lib")
-    SET(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".a")
-# Deal with lesser OSes
-elseif (WIN32)
-    if (MSVC)
-        SET(CMAKE_FIND_LIBRARY_PREFIXES "")
-        SET(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
-    else (MSVC)
-        # Can accept lib<name>.a or <name>.lib.
-        # More info:
-        # http://www.mingw.org/wiki/specify_the_libraries_for_the_linker_to_use
-        SET(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
-        SET(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" ".a" "dll.a")
-    endif (WIN32)
-endif (UNIX)
-
 
 # Specify 64 bit architectures search paths
 if (${XXBITS} STREQUAL x86_64)
-    set(ASSIMP_XXBITS x64)
-    set(ASSIMP_SEARCH_LIB_PATH_SUFFIXES lib64)
+    SET(ASSIMP_XXBITS x64)
+    SET(ASSIMP_SEARCH_LIB_PATH_SUFFIXES lib64)
 
-    set(ASSIMP_BUILD_TYPE Release)
-    set(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
+    SET(ASSIMP_BUILD_TYPE Release)
+    SET(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
         lib/${ASSIMP_XXBITS}/${ASSIMP_BUILD_TYPE}
         lib/${ASSIMP_BUILD_TYPE}/${ASSIMP_XXBITS}
     )
 
-    set(ASSIMP_BUILD_TYPE Debug)
-    set(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
+    SET(ASSIMP_BUILD_TYPE Debug)
+    SET(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
         lib/${ASSIMP_XXBITS}/${ASSIMP_BUILD_TYPE}
         lib/${ASSIMP_BUILD_TYPE}/${ASSIMP_XXBITS}
     )
 
     if (WIN32)
-        set(ASSIMP_BUILD_TYPE release)
-        set(ASSIMP_SEARCH_RELEASE_DLL_PATH_SUFFIXES
+        SET(ASSIMP_BUILD_TYPE release)
+        SET(ASSIMP_SEARCH_RELEASE_DLL_PATH_SUFFIXES
             bin64
             bin/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
         )
-        set(ASSIMP_BUILD_TYPE debug)
-        set(ASSIMP_SEARCH_DEBUG_DLL_PATH_SUFFIXES
+        SET(ASSIMP_BUILD_TYPE debug)
+        SET(ASSIMP_SEARCH_DEBUG_DLL_PATH_SUFFIXES
             bin64
             bin/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
         )
     endif (WIN32)
     if (MSVC)
-        set(ASSIMP_SEARCH_LIB_PATH_SUFFIXES
+        SET(ASSIMP_SEARCH_LIB_PATH_SUFFIXES
             ${ASSIMP_SEARCH_LIB_PATH_SUFFIXES}
             lib/${ASSIMP_XXBITS}
         )
 
-        set(ASSIMP_BUILD_TYPE release)
-        set(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
+        SET(ASSIMP_BUILD_TYPE release)
+        SET(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
             ${ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES}
             lib/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
         )
 
-        set(ASSIMP_BUILD_TYPE debug)
-        set(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
+        SET(ASSIMP_BUILD_TYPE debug)
+        SET(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
             ${ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES}
             lib/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
         )
     else (MSVC)
-        set(ASSIMP_XXBITS win64)
-        set(ASSIMP_BUILD_TYPE release)
-        set(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
+        SET(ASSIMP_XXBITS win64)
+        SET(ASSIMP_BUILD_TYPE release)
+        SET(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
             ${ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES}
             lib/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
         )
 
-        set(ASSIMP_BUILD_TYPE debug)
-        set(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
+        SET(ASSIMP_BUILD_TYPE debug)
+        SET(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
             ${ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES}
             lib/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
         )
     endif (MSVC)
 # Specify 32 bit architectures search paths
 else (${XXBITS} STREQUAL x86_64)
-    set(ASSIMP_SEARCH_LIB_PATH_SUFFIXES lib/${XXBITS})
-    set(ASSIMP_XXBITS ${XXBITS})
+    SET(ASSIMP_SEARCH_LIB_PATH_SUFFIXES lib/${XXBITS})
+    SET(ASSIMP_XXBITS ${XXBITS})
 
-    set(ASSIMP_BUILD_TYPE Release)
-    set(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
+    SET(ASSIMP_BUILD_TYPE Release)
+    SET(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
         lib/${ASSIMP_XXBITS}/${ASSIMP_BUILD_TYPE}
         lib/${ASSIMP_BUILD_TYPE}/${ASSIMP_XXBITS}
     )
 
-    set(ASSIMP_BUILD_TYPE Debug)
-    set(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
+    SET(ASSIMP_BUILD_TYPE Debug)
+    SET(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
         lib/${ASSIMP_XXBITS}/${ASSIMP_BUILD_TYPE}
         lib/${ASSIMP_BUILD_TYPE}/${ASSIMP_XXBITS}
     )
 
-    set(ASSIMP_XXBITS win32)
+    SET(ASSIMP_XXBITS win32)
 
-    set(ASSIMP_BUILD_TYPE release)
-    set(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
+    SET(ASSIMP_BUILD_TYPE release)
+    SET(ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES
         ${ASSIMP_SEARCH_RELEASE_LIB_PATH_SUFFIXES}
         lib/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
     )
-    set(ASSIMP_BUILD_TYPE debug)
-    set(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
+    SET(ASSIMP_BUILD_TYPE debug)
+    SET(ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES
         ${ASSIMP_SEARCH_DEBUG_LIB_PATH_SUFFIXES}
         lib/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
     )
 
     if (NOT MSVC)
-        set(ASSIMP_SEARCH_LIB_PATH_SUFFIXES
+        SET(ASSIMP_SEARCH_LIB_PATH_SUFFIXES
             ${ASSIMP_SEARCH_LIB_PATH_SUFFIXES}
             lib
             lib32
@@ -174,13 +169,13 @@ else (${XXBITS} STREQUAL x86_64)
         )
     endif (NOT MSVC)
     if (WIN32)
-        set(ASSIMP_BUILD_TYPE release)
-        set(ASSIMP_SEARCH_RELEASE_DLL_PATH_SUFFIXES
+        SET(ASSIMP_BUILD_TYPE release)
+        SET(ASSIMP_SEARCH_RELEASE_DLL_PATH_SUFFIXES
             bin32
             bin/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
         )
-        set(ASSIMP_BUILD_TYPE debug)
-        set(ASSIMP_SEARCH_DEBUG_DLL_PATH_SUFFIXES
+        SET(ASSIMP_BUILD_TYPE debug)
+        SET(ASSIMP_SEARCH_DEBUG_DLL_PATH_SUFFIXES
             bin32
             bin/assimp_${ASSIMP_BUILD_TYPE}-dll_${ASSIMP_XXBITS}
         )
@@ -264,10 +259,10 @@ find_package_handle_standard_args(
 
 if (ASSIMP_FOUND)
     if (ASSIMP_LIBRARY_DEBUG)
-        set(ASSIMP_LIBRARIES optimized ${ASSIMP_LIBRARY_RELEASE} debug ${ASSIMP_LIBRARY_DEBUG} CACHE STRING "Assimp libraries")
-        set(ASSIMP_LIBRARY_DIRS ${ASSIMP_LIBRARY_RELEASE_DIR} ${ASSIMP_LIBRARY_DEBUG_DIR})
+        SET(ASSIMP_LIBRARIES optimized ${ASSIMP_LIBRARY_RELEASE} debug ${ASSIMP_LIBRARY_DEBUG} CACHE STRING "Assimp libraries")
+        SET(ASSIMP_LIBRARY_DIRS ${ASSIMP_LIBRARY_RELEASE_DIR} ${ASSIMP_LIBRARY_DEBUG_DIR})
     else()
-        set(ASSIMP_LIBRARIES ${ASSIMP_LIBRARY_RELEASE} CACHE STRING "Assimp libraries")
-        set(ASSIMP_LIBRARY_DIRS ${ASSIMP_LIBRARY_RELEASE_DIR})
+        SET(ASSIMP_LIBRARIES ${ASSIMP_LIBRARY_RELEASE} CACHE STRING "Assimp libraries")
+        SET(ASSIMP_LIBRARY_DIRS ${ASSIMP_LIBRARY_RELEASE_DIR})
     endif()
 endif (ASSIMP_FOUND)

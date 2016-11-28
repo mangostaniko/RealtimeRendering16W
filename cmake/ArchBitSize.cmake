@@ -1,5 +1,6 @@
 #.rst:
 #
+# =======================
 # Architecture's bit size
 # =======================
 #
@@ -13,21 +14,23 @@
 #
 
 
-# Test 32/64 bits
-if ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-    message(STATUS "Target is 64 bits")
-    set(XXBITS x86_64)
-    if (WIN32)
-        set(OSXXBITS win64)
-    else (WIN32)
-        set(OSXXBITS x86_64)
-    endif (WIN32)
-else ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-    message(STATUS "Target is 32 bits")
-    set(XXBITS x86)
-    if (WIN32)
-        set(OSXXBITS win32)
-    else (WIN32)
-        set(OSXXBITS x86)
-    endif(WIN32)
-endif ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+if (NOT DEFINED XXBITS)
+    # Test 32/64 bits
+    if ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+        message(STATUS "Target is 64 bits")
+        set(XXBITS x86_64)
+        if (WIN32)
+            set(OSXXBITS win64)
+        else (WIN32)
+            set(OSXXBITS x86_64)
+        endif (WIN32)
+    else ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+        message(STATUS "Target is 32 bits")
+        set(XXBITS x86)
+        if (WIN32)
+            set(OSXXBITS win32)
+        else (WIN32)
+            set(OSXXBITS x86)
+        endif(WIN32)
+    endif ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+endif (NOT DEFINED XXBITS)
