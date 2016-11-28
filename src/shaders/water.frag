@@ -28,7 +28,13 @@ uniform float waveTimeBasedShift;
 
 void main()
 {
+    // normalize normal, light and view vectors
+    vec3 normal = normalize(N);
+    vec3 lightDir = normalize(lightWorldPos.xyz - P);
+    vec3 viewDir = normalize(cameraWorldPos.xyz - P);
 
+    // wave effect via distorted sampling of reflection/refraction texture
+    // the distortion map itself is sampled distorted by a time based shift (animated waves)
     vec2 distortion1 = texture(waterDistortionDuDvMap, vec2( texCoord.x*10 + waveTimeBasedShift, texCoord.y*10)).rg * waveAmplitude;
     vec2 distortion2 = texture(waterDistortionDuDvMap, vec2(-texCoord.x*10 + waveTimeBasedShift, texCoord.y*10 + waveTimeBasedShift)).rg * waveAmplitude;
     vec2 totalDistortion = distortion1 + distortion2;
@@ -42,14 +48,12 @@ void main()
     vec4 reflectColor = texture(reflectionTexture, reflectTexCoords);
     vec4 refractColor = texture(refractionTexture, refractTexCoords);
 
-    vec4 diffuseColor = mix(reflectColor, refractColor, 0.5);
+    float reflectionFactor = max(dot(viewDir, vec3(0,1,0)), 0); // fresnel effect reflection attenuation
+    vec4 diffuseColor = mix(reflectColor, refractColor, reflectionFactor);
     //diffuseColor = mix(diffuseColor, vec4(0.3, 0.3, 1.0f, 1), 0.2); // add blue tint
 
 
-    // normalize normal, light and view vectors
-    vec3 normal = normalize(N);
-    vec3 lightDir = normalize(lightWorldPos.xyz - P);
-    vec3 viewDir = normalize(cameraWorldPos.xyz - P);
+
 
     // diffuse
     vec4 diffuse = diffuseColor;

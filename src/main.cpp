@@ -48,7 +48,7 @@ int windowWidth, windowHeight;
 double deltaT;
 bool running                    = true;
 bool paused                     = false;
-bool debugInfoEnabled           = true;
+bool debugInfoEnabled           = false;
 bool ssaoEnabled                = false;
 bool ssaoBlurEnabled            = false;
 bool shadowsEnabled             = true;
@@ -219,6 +219,11 @@ int main(int argc, char **argv)
 		time = glfwGetTime(); // seconds
 		deltaT = time - lastTime;
 		lastTime = time;
+
+		// print fps in window title
+		std::stringstream ss;
+		ss << "SUZANNE ISLAND [" << int(1/deltaT + 0.5) << " FPS]";
+		glfwSetWindowTitle(window, ss.str().c_str());
 
 		//////////////////////////
 		/// UPDATE
