@@ -77,8 +77,8 @@ SSAOEffect *ssaoEffect;
 WaterEffect *waterEffect;
 
 Camera *camera; glm::mat4 cameraInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, 50)));
-Eagle *eagle; glm::mat4 eagleInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 30, -45)));
 
+Eagle *eagle; glm::mat4 eagleInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 30, -45)));
 Geometry *island;
 Geometry *ocean;
 
@@ -359,7 +359,17 @@ void init(GLFWwindow *window)
 	ocean = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/water/water.dae");
 
 	// INIT CAMERA
+
+	// placeholder camera bezier path consisting of a single curve segment.
+	// each bezier curve segment is defined by three control points.
+	std::vector<std::vector<glm::vec3>> bezierPath(1);
+	bezierPath[0].push_back(glm::vec3(0, 30, 70));
+	bezierPath[0].push_back(glm::vec3(0, 10, 50));
+	bezierPath[0].push_back(glm::vec3(0, 10, 30));
+
 	camera = new Camera(window, cameraInitTransform, glm::radians(90.0f), width/(float)height, 0.2f, 600.0f); // mat, fov, aspect, znear, zfar
+	camera->appendPath(bezierPath);
+	camera->setTargetLookAtPos(glm::vec3(0, 5, 0));
 
 	// INIT EAGLE
 	eagle = new Eagle(eagleInitTransform, "data/models/eagle/eagle.dae");
@@ -458,7 +468,7 @@ void initVSMBlur()
 
 void update(float timeDelta)
 {
-	camera->update(timeDelta);
+	camera->update(timeDelta, 0.1f);
 
 	eagle->update(timeDelta, camera->getLocation() + glm::vec3(0, 2, 0), true, false);
 

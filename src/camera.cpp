@@ -15,6 +15,10 @@ Camera::Camera(GLFWwindow *window_, const glm::mat4 &matrix_, float fieldOfView_
 	// set glfw callbacks
 	glfwSetScrollCallback(window, onScroll);
 
+	currentPathSegment = 0;
+	pathSegmentLerpFactor = 0.0f;
+	targetLookAtPos = glm::vec3(0, 5, 0);
+
 	lastCamTransform = getMatrix();
 }
 
@@ -29,13 +33,16 @@ Camera::~Camera()
 }
 
 
-void Camera::update(float timeDelta)
+void Camera::update(float timeDelta, float cameraPathSpeed)
 {
 	// note: camera navigation mode is toggled on tab key press, look for keyCallback
 	handleNavModeChange();
 
-	if (cameraNavMode == FOLLOW_CURVE) {
-		/* TODO */
+	if (cameraNavMode == FOLLOW_PATH) {
+		/* no user movement in follow path mode */
+
+		if (cameraPath.size() > 0)
+			updateBezierPathCamTransform(timeDelta, cameraPathSpeed);
 	}
 	else {
 		handleInputFreeCamera(window, timeDelta);
@@ -122,6 +129,52 @@ bool Camera::checkSphereInFrustum(const glm::vec3 &sphereCenterWorldSpace, const
 	return true;
 }
 
+/* FOLLOW PATH MODE */
+
+void Camera::appendPath(std::vector<std::vector<glm::vec3> > newPath)
+{
+	if (cameraPath.size() > 0) {
+		// to connect new path to existing path, align terminal segments
+		// by taking arithmetic mean of their central control points for both of the outermost control points
+		glm::vec3 connectingPoint = glm::mix(cameraPath[cameraPath.size()-1][1], newPath[0][1], 0.5);
+		cameraPath[cameraPath.size()-1][2] = connectingPoint;
+		newPath[0][0] = connectingPoint;
+	}
+
+	// append path
+	for (auto iter = newPath.begin(); iter != newPath.end(); ++iter) {
+		cameraPath.push_back(*iter);
+	}
+}
+
+void Camera::updateBezierPathCamTransform(const double timeDelta, const double speed)
+{
+	// to get a point on a bezier curve (segment) with three control points A,B,C:
+	// for parameter position (linear inpolation factor) [0,1] on curve: lerp A,B and B,C and lerp the lerped points.
+
+	pathSegmentLerpFactor += timeDelta * speed;
+
+	if (pathSegmentLerpFactor > 1.0) {
+		// jump to next bezier curve (next path segment)
+		currentPathSegment = (currentPathSegment+1) % cameraPath.size();
+		pathSegmentLerpFactor -= 1.0;
+	}
+	//std::cout << "camera path segment current/last: " << currentPathSegment << "/" << cameraPath.size()-1 << ", lerp: " << pathSegmentLerpFactor << std::endl;
+
+	// get segment control points
+	glm::vec3 A = cameraPath[currentPathSegment][0];
+	glm::vec3 B = cameraPath[currentPathSegment][1];
+	glm::vec3 C = cameraPath[currentPathSegment][2];
+
+	// determine bezier curve position
+	glm::vec3 lerpPosAB = glm::mix(A, B, pathSegmentLerpFactor);
+	glm::vec3 lerpPosBC = glm::mix(B, C, pathSegmentLerpFactor);
+	glm::vec3 bezierPathPos = glm::mix(lerpPosAB, lerpPosBC, pathSegmentLerpFactor);
+
+	setTransform(glm::inverse(glm::lookAt(bezierPathPos, targetLookAtPos, glm::vec3(0, 1, 0))));
+
+}
+
 /* INPUT HANDLING */
 
 void Camera::handleInputFreeCamera(GLFWwindow *window, float timeDelta)
@@ -189,11 +242,14 @@ void Camera::onScroll(GLFWwindow *window, double deltaX, double deltaY)
 
 void Camera::toggleNavMode()
 {
-	if (cameraNavMode == FOLLOW_CURVE) {
+	if (cameraNavMode == FOLLOW_PATH) {
 		cameraNavMode = FREE_FLY;
 	}
 	else if (cameraNavMode == FREE_FLY) {
-		cameraNavMode = FOLLOW_CURVE;
+		cameraNavMode = FOLLOW_PATH;
+
+		if (cameraPath.size() < 1)
+			std::cerr << "ERROR CAMERA: " << "no bezier path set for camera to follow." << std::endl;
 	}
 }
 
