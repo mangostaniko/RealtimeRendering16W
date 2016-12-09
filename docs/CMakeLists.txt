@@ -1,50 +1,60 @@
-FIND_PACKAGE(Doxygen)
+find_package(Doxygen)
+
 
 # check if doxygen is even installed
-if (DOXYGEN_FOUND)
-    # prepare doxygen configuration file
-    CONFIGURE_FILE(
-        ${CMAKE_CURRENT_SOURCE_DIR}/api/Doxyfile.in
-        ${CMAKE_CURRENT_BINARY_DIR}/api/Doxyfile
-        @ONLY
-    )
+if (NOT DOXYGEN_FOUND)
+    message(STATUS "Doxygen not found, API documentation cannot be generated.")
+    return()
+endif (NOT DOXYGEN_FOUND)
 
-    # Generate new target to build the html documentation
-    ADD_CUSTOM_COMMAND(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/api/html/index.html
-        COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/api/Doxyfile
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/api/Doxyfile
-    )
+# prepare doxygen configuration file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/api/Doxyfile.in
+    ${CMAKE_CURRENT_BINARY_DIR}/api/Doxyfile
+    @ONLY
+)
 
-    # add doc as target
-    ADD_CUSTOM_TARGET(
+# Generate new target to build the html documentation
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/api/html/index.html
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/api/Doxyfile
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/api/Doxyfile
+)
+
+# add project's doc as target
+add_custom_target(
+    ${PROJECT_NAME}_doc
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/api/html/index.html
+    COMMENT "Building ${PROJECT_NAME}'s API documentation."
+)
+
+if (NOT TARGET doc)
+    add_custom_target(
         doc
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/api/html/index.html
-        COMMENT "Building doxygen documentation"
+        COMMENT "Building ${CMAKE_PROJECT_NAME}'s API documentation."
     )
+endif ()
 
-    # cleanup ${PROJECT_BINARY_DIR}/docs/api on "make clean"
-    SET_PROPERTY(
-        DIRECTORY APPEND PROPERTY
-        ADDITIONAL_MAKE_CLEAN_FILES
-        docs/api
-    )
+add_dependencies(doc ${PROJECT_NAME}_doc)
 
-    SET(DOC_PATH "share/doc/${CPACK_PACKAGE_NAME}-${VERSION}")
+# cleanup ${PROJECT_BINARY_DIR}/docs/api on "make clean"
+set_property(
+    DIRECTORY APPEND PROPERTY
+    ADDITIONAL_MAKE_CLEAN_FILES
+    ${PROJECT_BINARY_DIR}/docs/api/html
+    ${PROJECT_BINARY_DIR}/docs/api/latex
+)
 
-    # install HTML API documentation and manual pages
-    INSTALL(
-        DIRECTORY   ${CMAKE_CURRENT_BINARY_DIR}/api/html
-        DESTINATION ${DOC_PATH}
-    )
+set(DOC_PATH "share/doc/${CPACK_PACKAGE_NAME}-${VERSION}")
 
-    # install man pages into packages, scope is now project root..
-    INSTALL(
-        DIRECTORY   ${CMAKE_CURRENT_BINARY_DIR}/api/man/man3
-        DESTINATION share/man/man3/
-    )
+# install HTML API documentation and manual pages
+install(
+    DIRECTORY   ${CMAKE_CURRENT_BINARY_DIR}/api/html
+    DESTINATION ${DOC_PATH}
+)
 
-else (DOXYGEN_FOUND)
-    MESSAGE(STATUS "Doxygen not found, we cannot generate the documentation")
-endif (DOXYGEN_FOUND)
-
+# install man pages into packages, scope is now project root..
+install(
+    DIRECTORY   ${CMAKE_CURRENT_BINARY_DIR}/api/man/man3
+    DESTINATION share/man/man3/
+)
