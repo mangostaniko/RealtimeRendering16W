@@ -91,6 +91,7 @@ Light *sun; // sun start and end positions are linearly interpolated over time o
 const glm::vec3 LIGHT_START(glm::vec3(-20, 150, 1000));
 const glm::vec3 LIGHT_END(glm::vec3(100, 150, 1000));
 const float dayLength = 60;
+const float cameraFollowPathSpeed = 0.3f;
 
 // Shadow Map FBO and depth texture
 const int SM_WIDTH = 2048, SM_HEIGHT = 2048;
@@ -285,7 +286,7 @@ void init(GLFWwindow *window)
 
 	// INIT EFFECTS
 	ssaoEffect = new SSAOEffect(width, height, 32);
-	waterEffect = new WaterEffect(width, height, 0.5, 0.8, "data/models/water/waterDistortionDuDv.png", 0.02, 0.03);
+	waterEffect = new WaterEffect(width, height, 0.5f, 0.8f, "data/models/water/waterDistortionDuDv.png", 0.02f, 0.03f);
 	lightbeamsEffect = new LightbeamsEffect(width, height);
 
 	// INIT SHADERS
@@ -339,16 +340,32 @@ void init(GLFWwindow *window)
 
 	// INIT CAMERA
 
-	// placeholder camera bezier path consisting of a single curve segment.
-	// each bezier curve segment is defined by three control points.
-	std::vector<std::vector<glm::vec3>> bezierPath(1);
-	bezierPath[0].push_back(glm::vec3(0, 30, 70));
-	bezierPath[0].push_back(glm::vec3(0, 10, 50));
-	bezierPath[0].push_back(glm::vec3(0, 10, 30));
+	// camera bezier path to follow in FOLLOW_PATH mode
+	// each bezier path segment is defined by three control points.
+	std::vector<std::vector<glm::vec3>> cameraPathApproaching(1);
+	cameraPathApproaching[0].push_back(glm::vec3(100, 50, 100));
+	cameraPathApproaching[0].push_back(glm::vec3(80, 30, 80));
+	cameraPathApproaching[0].push_back(glm::vec3(60, 8, 60));
+
+	float bezierPathCircleRadius = 50; float bezierPathCircleHeight = 5;
+	std::vector<std::vector<glm::vec3>> cameraPathCircling(4);
+	cameraPathCircling[0].push_back(glm::vec3(bezierPathCircleRadius, bezierPathCircleHeight, 0));
+	cameraPathCircling[0].push_back(glm::vec3(bezierPathCircleRadius, bezierPathCircleHeight, bezierPathCircleRadius));
+	cameraPathCircling[0].push_back(glm::vec3(0,bezierPathCircleHeight,bezierPathCircleRadius));
+	cameraPathCircling[1].push_back(glm::vec3(0,bezierPathCircleHeight,bezierPathCircleRadius));
+	cameraPathCircling[1].push_back(glm::vec3(-bezierPathCircleRadius*1.4f,bezierPathCircleHeight,bezierPathCircleRadius*1.4f));
+	cameraPathCircling[1].push_back(glm::vec3(-bezierPathCircleRadius*1.4f,bezierPathCircleHeight,0));
+	cameraPathCircling[2].push_back(glm::vec3(-bezierPathCircleRadius*1.4f,bezierPathCircleHeight,0));
+	cameraPathCircling[2].push_back(glm::vec3(-bezierPathCircleRadius*1.4f,bezierPathCircleHeight*4,-bezierPathCircleRadius*1.4f));
+	cameraPathCircling[2].push_back(glm::vec3(0,bezierPathCircleHeight*4,-bezierPathCircleRadius*1.4f));
+	cameraPathCircling[3].push_back(glm::vec3(0,bezierPathCircleHeight*4,-bezierPathCircleRadius*1.4f));
+	cameraPathCircling[3].push_back(glm::vec3(bezierPathCircleRadius*1.4f,bezierPathCircleHeight*4,-bezierPathCircleRadius*1.4));
+	cameraPathCircling[3].push_back(glm::vec3(bezierPathCircleRadius*1.4f,bezierPathCircleHeight*4,0));
 
 	camera = new Camera(window, cameraInitTransform, glm::radians(90.0f), width/(float)height, 0.2f, 600.0f); // mat, fov, aspect, znear, zfar
-	camera->appendPath(bezierPath);
-	camera->setTargetLookAtPos(glm::vec3(0, 5, 0));
+	camera->appendPath(cameraPathApproaching);
+	camera->appendPath(cameraPathCircling);
+	camera->setTargetLookAtPos(glm::vec3(0, 8, 0));
 
 	// INIT EAGLE
 	eagle = new Eagle(eagleInitTransform, "data/models/eagle/eagle.dae");
@@ -387,7 +404,7 @@ void initPCFSM()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 	// SM Framebuffer
@@ -447,7 +464,7 @@ void initVSMBlur()
 
 void update(float timeDelta)
 {
-	camera->update(timeDelta, 0.1f);
+	camera->update(timeDelta, cameraFollowPathSpeed);
 
 	eagle->update(timeDelta, camera->getLocation() + glm::vec3(0, 2, 0), true, false);
 
@@ -731,7 +748,7 @@ void drawText()
 	}
 
 	if (paused) {
-		textRenderer->renderText("PAUSED", 25.0f, 150.0f, 0.7f, glm::vec3(1, 0.35f, 0.7f));
+		textRenderer->renderText("PAUSED", 25.0f, 150.0f, 0.7f, glm::vec3(1.0f, 0.35f, 0.7f));
 	}
 
 	glEnable(GL_DEPTH_TEST);
