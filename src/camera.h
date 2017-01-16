@@ -20,8 +20,8 @@
 class Camera : public SceneObject
 {
     public:
-	Camera(GLFWwindow *window_, const glm::mat4 &matrix_, float fieldOfView_, float aspectRatio_, float nearPlane_, float farPlane_);
-	Camera(GLFWwindow *window_, const glm::mat4 &matrix_);
+    Camera(GLFWwindow *window_, const glm::mat4 &matrix_, float fieldOfView_, float aspectRatio_, float nearPlane_, float farPlane_);
+    Camera(GLFWwindow *window_, const glm::mat4 &matrix_);
     virtual ~Camera();
 
 	/// Update the state of the Camera
@@ -44,62 +44,61 @@ class Camera : public SceneObject
     */
     glm::mat4 getProjMat() const;
 
-	/// Get field of view of the viewing frustum
+    //! Get field of view of the viewing frustum
     /// \return the field of view angle in radians
     float getFieldOfView() const;
 
-	/// Set field of view of the viewing frustum
+    //! Set field of view of the viewing frustum
     void setFieldOfView(
-	    float fieldOfView_ ///< [in] the new field of view angle in radians
+        float fieldOfView_ //!< [in] the new field of view angle in radians
     );
 
-	/// Get the aspect ratio of the viewing frustum (width/height)
+    //! Get the aspect ratio of the viewing frustum (width/height)
     /// \return the aspect ratio (width/height)
     float getAspectRatio() const;
 
-	/// Set the aspect ratio of the viewing frustum (width / height)
+    //! Set the aspect ratio of the viewing frustum (width / height)
     void setAspectRatio(
-	    float aspectRatio_ ///< [in] the new aspect ratio (width/height)
+        float aspectRatio_ //!< [in] the new aspect ratio (width/height)
     );
 
-	/// Get distance from camera to near plane of the viewing frustum
+    //! Get distance from camera to near plane of the viewing frustum
     /// \return the distance from camera to near plane
     float getNearPlane() const;
 
-	/// Set distance from camera to near plane of the viewing frustum
+    //! Set distance from camera to near plane of the viewing frustum
     void setNearPlane(
-	    float nearPlane_ ///< [in] the new distance from camera to near plane
+        float nearPlane_ //!< [in] the new distance from camera to near plane
     );
 
-	/// Get distance from camera to near plane of the viewing frustum
+    //! Get distance from camera to near plane of the viewing frustum
     /// \return the distance from camera to near plane
     float getFarPlane() const;
 
-	/// Set distance from camera to far plane of the viewing frustum
+    //! Set distance from camera to far plane of the viewing frustum
     /// \return farPlane_ the new distance from camera to far plane
     void setFarPlane(float farPlane_);
 
-	/// Rotate camera to look at a given target point
+    //! Rotate camera to look at a given target point
     /// The target should not be the camera location.
     void lookAt(
-	    const glm::vec3 &target ///< [in] the target point to look at.
+        const glm::vec3 &target //!< [in] the target point to look at.
     );
 
-	/// Determine whether a sphere with given center and farthest point in
-	/// world space lies completely within the view frustum. Note that the
-	/// farthest point is passed instead of the radius to apply matrices
-	/// to do the checks in clip space.
+    //! Determine whether a sphere with given center and farthest point in
+    //! world space lies completely within the view frustum. Note that the
+    //! farthest point is passed instead of the radius to apply matrices
+    //! to do the checks in clip space.
     /// \return whether the sphere lies completely within the view frustum
     bool checkSphereInFrustum(
-	    const glm::vec3 &sphereCenterWorldSpace, ///< [in] the center of the sphere in world space
-	    const glm::vec3 &sphereFarthestPointWorldSpace, ///< [in] the farthest point from sphere center in world space
-	    const glm::mat4 &viewMat ///< [in] Viewing matrix
+        const glm::vec3 &sphereCenterWorldSpace, //!< [in] the center of the sphere in world space
+        const glm::vec3 &sphereFarthestPointWorldSpace, //!< [in] the farthest point from sphere center in world space
+        const glm::mat4 &viewMat //!< [in] Viewing matrix
     );
 
-	/// Toggle the camera navigation mode
+    //! Toggle the camera navigation mode
     void toggleNavMode();
-
-
+    
 	/// clears the current camera path
 	inline void clearCameraPath() { cameraPath.clear(); }
 
@@ -118,11 +117,10 @@ class Camera : public SceneObject
 
 	/// set target look at position for FOLLOW_PATH mode
 	inline void setTargetLookAtPos(const glm::vec3& lookAtPos) { targetLookAtPos = lookAtPos; }
-
-
+    
 private:
 
-	GLFWwindow *window; ///< GLFW window for input handling
+    GLFWwindow *window; //!< GLFW window for input handling
 
     float fieldOfView;
     float aspectRatio;
@@ -131,7 +129,7 @@ private:
 
     enum CameraNavigationMode
     {
-		FOLLOW_PATH,
+        FOLLOW_PATH,
         FREE_FLY
     };
 
@@ -139,9 +137,9 @@ private:
     CameraNavigationMode lastNavMode;
     glm::mat4 lastCamTransform; // backup transformation matrix before changing camera mode
 
-	float timePassed = 0; ///< in seconds
-	static double scrollY; ///< amount scrolled since last frame
-
+    float timePassed = 0; //!< in seconds
+    static double scrollY; //!< amount scrolled since last frame
+    
 	/// update position on bezier path, after some time has passed
 	void updateBezierPathCamTransform(const double timeDelta, const double speed);
 
@@ -150,21 +148,26 @@ private:
 	float pathSegmentLerpFactor; ///< lin. interpolation factor for bezier control points on current path segment. in range [0,1[.
 	glm::vec3 targetLookAtPos; ///< target position to look at while in FOLLOW_PATH mode
 
-	/// check if the camera navigation mode has changed and set camera accordingly
-	/// note: currently only works if there are only 2 nav modes
-	void handleNavModeChange();
+    /**
+    * @brief check if the camera navigation mode has changed and set camera accordingly
+    * note: currently only works if there are only 2 nav modes
+    */
+    void handleNavModeChange();
 
-	/// GLFW callback on mouse scroll
+    //! GLFW callback on mouse scroll
     static void onScroll(
-	    GLFWwindow *window, ///< [in,out] window pointer to active window
-	    double deltaX, ///< [in] the scroll delta on scroll axis X
-	    double deltaY ///< [in] the scroll delta on scroll axis Y
+        GLFWwindow *window, //!< [in,out] window pointer to active window
+        double deltaX, //!< [in] the scroll delta on scroll axis X
+        double deltaY //!< [in] the scroll delta on scroll axis Y
     );
 
-	/// Handle input to control camera in free fly mode.
+    //! Handle input to control camera in free fly mode.
     void handleInputFreeCamera(
-	    GLFWwindow *window, ///< [in,out] pointer to active window
-	    float timeDelta ///< [in] time passed since the last frame in seconds
+        GLFWwindow *window, //!< [in,out] pointer to active window
+        float timeDelta //!< [in] time passed since the last frame in seconds
     );
+    
+    glm::vec3 mix(const glm::vec3 &a, const glm::vec3 &b, float t);
+    
 };
 
