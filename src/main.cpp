@@ -22,6 +22,7 @@
 #include "textrenderer.h"
 #include "effects/ssao_effect.h"
 #include "effects/water_effect.h"
+#include "effects/lightbeams_effect.h"
 
 void init(GLFWwindow *window);
 void initSM();
@@ -33,13 +34,16 @@ void vsmBlurPass();
 void debugShadowPass();
 void ssaoPrepass();
 void waterPrepass();
+void lightbeamsPrepass();
 void mainDrawPass();
 void update(float timeDelta);
 void draw();
 void setActiveShader(Shader *shader);
 void drawGeometry();
 void drawWater();
+void drawLightbeams();
 void drawText();
+void drawScreenFillingQuad();
 void cleanup();
 void newGame();
 
@@ -69,12 +73,13 @@ GLuint uboMatricesBlockSize = 256; //2 * sizeof(glm::mat4);
 GLuint uboViewAndCamBlockSize = 256; //5 * sizeof(glm::vec4);
 GLuint uboTotalSize = uboMatricesBlockSize + uboViewAndCamBlockSize;
 
-Shader *textureShader;
+Shader *textureShader, *flatSingleColorShader;
 Shader *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader; // shadow mapping
 Shader *activeShader;
 TextRenderer *textRenderer;
 SSAOEffect *ssaoEffect;
 WaterEffect *waterEffect;
+LightbeamsEffect *lightbeamsEffect;
 
 Camera *camera; glm::mat4 cameraInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, 50)));
 
@@ -83,8 +88,8 @@ Geometry *island;
 Geometry *ocean;
 
 Light *sun; // sun start and end positions are linearly interpolated over time of day
-const glm::vec3 LIGHT_START(glm::vec3(-20, 50, -40));
-const glm::vec3 LIGHT_END(glm::vec3(20, 30, -50));
+const glm::vec3 LIGHT_START(glm::vec3(-20, 150, 1000));
+const glm::vec3 LIGHT_END(glm::vec3(100, 150, 1000));
 const float dayLength = 60;
 
 // Shadow Map FBO and depth texture
@@ -98,36 +103,8 @@ GLuint pingpongColorMap;
 void frameBufferResize(GLFWwindow *window, int width, int height);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
-// ONLY FOR SHADOW MAPPING DEBUG
 GLuint quadVAO = 0;
 GLuint quadVBO;
-void RenderQuad()
-{
-	if (quadVAO == 0)
-	{
-		GLfloat quadVertices[] = {
-		    // Positions         // Texture Coords
-		    -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-		    -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
-		    1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
-		    1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
-		};
-		// Setup plane VAO
-		glGenVertexArrays(1, &quadVAO);
-		glGenBuffers(1, &quadVBO);
-		glBindVertexArray(quadVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-	}
-	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glBindVertexArray(0);
-}
-// SHADOW MAP DEBUG END
 
 
 int main(int argc, char **argv)
@@ -309,8 +286,10 @@ void init(GLFWwindow *window)
 	// INIT EFFECTS
 	ssaoEffect = new SSAOEffect(width, height, 32);
 	waterEffect = new WaterEffect(width, height, 0.5, 0.8, "data/models/water/waterDistortionDuDv.png", 0.02, 0.03);
+	lightbeamsEffect = new LightbeamsEffect(width, height);
 
 	// INIT SHADERS
+	flatSingleColorShader = new Shader("shaders/flat_singlecolor.vert", "shaders/flat_singlecolor.frag");
 	textureShader = new Shader("shaders/textured_blinnphong.vert", "shaders/textured_blinnphong.frag");
 	setActiveShader(textureShader); // non-trivial cost
 
@@ -526,6 +505,7 @@ void draw()
 		ssaoPrepass();
 
 	waterPrepass();
+	lightbeamsPrepass();
 
 	////////////////////////////////////
 	/// MAIN PASS
@@ -550,6 +530,8 @@ void draw()
 
 void shadowPrepass(glm::mat4 &lightViewPro)
 {
+	setActiveShader(textureShader);
+
 	// Calculate Light View-Projection Matrix
 	glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, SM_NEAR_PLANE, SM_FAR_PLANE);
 	//glm::mat4 lightProjection = glm::perspective(100.f, (GLfloat) SM_WIDTH / (GLfloat) SM_HEIGHT, nearPlane, farPlane);
@@ -596,20 +578,21 @@ void vsmBlurPass()
 	glUniform1i(activeShader->getUniformLocation("horizontal"), horizontal);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, vsmDepthMap);
-	RenderQuad();
+	drawScreenFillingQuad();
 	horizontal = !horizontal;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, vsmDepthMapFBO);
 	glUniform1i(activeShader->getUniformLocation("horizontal"), horizontal);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, pingpongColorMap);
-	RenderQuad();
+	drawScreenFillingQuad();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void waterPrepass()
 {
+	setActiveShader(textureShader);
 
 	// GENERATE REFLECTION TEXTURE
 	// render all geometry above the water surface
@@ -634,6 +617,23 @@ void waterPrepass()
 
 	waterEffect->bindDefaultFrameBuffer();
 
+}
+
+void lightbeamsPrepass()
+{
+	// GENERATE OCCLUSION TEXTURE
+	// occlusion texture stores sky colors and is black where sky is occluded
+	// render all geometry (all possible occluders) in black
+
+	setActiveShader(flatSingleColorShader);
+
+	lightbeamsEffect->bindOcclusionFrameBuffer();
+	glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUniform3f(activeShader->getUniformLocation("color"), 0.0f, 0.0f, 0.0f);
+	drawGeometry();
+
+	lightbeamsEffect->bindDefaultFrameBuffer();
 }
 
 
@@ -671,8 +671,6 @@ void drawGeometry()
 	/// DEFAULT ACTIVE SHADER TEXTURED BLINN-PHONG
 	//////////////////////////////////////////////////
 
-	setActiveShader(textureShader);
-
 	Geometry::drawnSurfaceCount = 0;
 
 	if (drawWireframe)
@@ -690,9 +688,6 @@ void drawGeometry()
 	glUniform1f(activeShader->getUniformLocation("material.shininess"), 32.f);
 	eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
 
-	// just draw ocean geometry now, water effect will be applied to redraw later
-	//ocean->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
-
 	if (drawWireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // disable wireframe
 }
@@ -705,6 +700,17 @@ void drawWater()
 	waterShader = nullptr;
 }
 
+void drawLightbeams()
+{
+	glEnable(GL_BLEND); // blend result onto default framebuffer
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+	Shader *lightbeamsShader = lightbeamsEffect->setupLightbeamsShader(sun->getLocation(), camera->getProjMat()*camera->getViewMat());
+	drawScreenFillingQuad(); // draw whole screen with lightbeams shader
+	lightbeamsShader = nullptr;
+
+	glDisable(GL_BLEND);
+}
 
 void drawText()
 {
@@ -734,6 +740,8 @@ void drawText()
 
 void mainDrawPass()
 {
+	setActiveShader(textureShader);
+
 	glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -746,6 +754,8 @@ void mainDrawPass()
 	drawGeometry();
 
 	drawWater();
+	
+    drawLightbeams();
 }
 
 
@@ -760,8 +770,42 @@ void debugShadowPass()
 	glActiveTexture(GL_TEXTURE0 + 0);
 	glBindTexture(GL_TEXTURE_2D, vsmDepthMap);
 
-	RenderQuad();
+	drawScreenFillingQuad();
 
+}
+
+void drawScreenFillingQuad()
+{
+	// draw a screen filling quad
+	// i.e. draw the whole screen
+	// useful e.g. for postprocessing effects
+	// NOTE: [-1,1] at zero depth are the edges of the screen in normalized device coordinates
+	// shaders must ensure that quad vertices are not transformed
+
+	if (quadVAO == 0) {
+		// define quad
+		GLfloat quadVertices[] = {
+		    // positions         // texture coords
+		    -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+		    -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+		     1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
+		     1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+		};
+		// setup quad vao
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	}
+	// draw
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
 }
 
 void newGame()
@@ -784,6 +828,7 @@ void newGame()
 void cleanup()
 {
 	delete textureShader; textureShader = nullptr;
+	delete flatSingleColorShader;
 	delete depthMapShader; depthMapShader = nullptr;
 	delete debugDepthShader; debugDepthShader = nullptr;
 	delete vsmDepthMapShader; vsmDepthMapShader = nullptr;
@@ -793,6 +838,7 @@ void cleanup()
 	delete textRenderer; textRenderer = nullptr;
 	delete ssaoEffect; ssaoEffect = nullptr;
 	delete waterEffect; waterEffect = nullptr;
+	delete lightbeamsEffect;
 
 	delete camera; camera = nullptr;
 	delete eagle; eagle = nullptr;

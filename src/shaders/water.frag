@@ -50,17 +50,14 @@ void main()
 
     float reflectionFactor = max(dot(viewDir, vec3(0,1,0)), 0); // fresnel effect reflection attenuation
     vec4 diffuseColor = mix(reflectColor, refractColor, reflectionFactor);
-    //diffuseColor = mix(diffuseColor, vec4(0.3, 0.3, 1.0f, 1), 0.2); // add blue tint
-
-
-
+    //diffuseColor = mix(diffuseColor, vec4(0.3, 0.3, 1.0, 1.0), 0.2); // add blue tint
 
     // diffuse
     vec4 diffuse = diffuseColor;
 
     // specular
     vec3 halfVec = normalize(lightDir + viewDir); // half vector of light and view vectors
-    vec4 specularColor = vec4(1.0f); //texture(specularTexture, texCoord).rgb;
+    vec4 specularColor = vec4(1.0); //texture(specularTexture, texCoord).rgb;
     vec4 specular = vec4(0); //pow(max(dot(halfVec, normal), 0.0f), 128) * lightSpecular;
 
     vec4 color = diffuse + specular;

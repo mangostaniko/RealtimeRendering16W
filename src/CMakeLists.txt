@@ -29,6 +29,8 @@ set(SRC_CLASSES
 
     effects/water_effect.h
     effects/water_effect.cpp
+    effects/lightbeams_effect.h
+    effects/lightbeams_effect.cpp    
     effects/ssao_effect.h
     effects/ssao_effect.cpp
     effects/particlesystem.h
@@ -37,6 +39,8 @@ set(SRC_CLASSES
 
 # relative path to shader files
 set(SRC_SHADERS
+    shaders/flat_singlecolor.vert
+    shaders/flat_singlecolor.frag
     shaders/textured_blinnphong.vert
     shaders/textured_blinnphong.frag
     shaders/normal_mapping.vert
@@ -44,7 +48,9 @@ set(SRC_SHADERS
 
     shaders/water.vert
     shaders/water.frag
-
+    shaders/lightbeams.vert
+    shaders/lightbeams.frag
+    
     shaders/text.vert
     shaders/text.frag
     shaders/particles.vert
