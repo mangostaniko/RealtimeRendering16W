@@ -13,6 +13,7 @@ LightbeamsEffect::LightbeamsEffect(int windowWidth, int windowHeight)
 
 	fboOccludedSky = createFrameBuffer();
 	occludedSkyColorTexture = createColorTextureAttachment(windowWidth, windowHeight);
+	occludedSkyDepthBuffer = createDepthRenderbufferAttachment(windowWidth, windowHeight);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cerr << "ERROR in LightbeamsEffect: Occlusion Framebuffer not complete" << std::endl;
 	bindDefaultFrameBuffer();
@@ -31,6 +32,7 @@ LightbeamsEffect::~LightbeamsEffect()
 
 	glDeleteFramebuffers(1, &fboOccludedSky);
 	glDeleteTextures(1, &occludedSkyColorTexture);
+	glDeleteRenderbuffers(1, &occludedSkyDepthBuffer);
 
 	delete lightbeamsShader;
 }
@@ -79,7 +81,7 @@ glm::vec2 LightbeamsEffect::worldToRelativeScreenSpace(const glm::vec3 &worldPos
 
 	// ignore positions behind the camera
 	// if behind set to (0,0) screen space position since positions at screen edges wont be drawn
-	if (clipSpacePos.z > 0.0f)
+	if (clipSpacePos.z < 0.0f)
 		return glm::vec2(0.0f, 0.0f);
 
 	// perspective divide (homogenization after perspective projection) to scale points towards center with greater distant

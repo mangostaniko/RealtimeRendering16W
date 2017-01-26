@@ -44,13 +44,13 @@ void main() {
     deltaTexCoord *= sampleDensityBias; // if 1 we reach sun in numSamples. if < 1 sampling will be denser but end before reaching the sun
     vec2 sampleTexCoord = texCoord;
 
-    vec3 fragColor = vec3(0.0, 0.0, 0.0);
+    vec4 fragColor = gl_FragColor;
     float illuminationDecay = 1.0;
 
     for (int i = 0; i < numSamples; ++i) { // fixed number of uniformly distanced samples
 
         sampleTexCoord -= deltaTexCoord; // move towards the sun
-        vec3 sampleColor = texture2D(occludedSkyTexture, sampleTexCoord).rgb; // sky color except for where occluded
+        vec4 sampleColor = texture2D(occludedSkyTexture, sampleTexCoord).rgba; // sky color except for where occluded
         fragColor += sampleColor * sampleWeight * illuminationDecay; // add color contribution
         illuminationDecay *= decayFactor; // color contribution decays with distance to fragment
     }
@@ -58,8 +58,9 @@ void main() {
     fragColor *= exposure;
 
     // attenuation based on light incident angle (approximated via taxicab distance of light screen space pos from center)
-    fragColor *= 1.0 - (abs(0.5 - sunPosScreenSpace.x) + abs(0.5 - sunPosScreenSpace.y));
+    if ((abs(0.5 - sunPosScreenSpace.x) + abs(0.5 - sunPosScreenSpace.y)) > 0.7)
+        fragColor *= 1.0 - (abs(0.5 - sunPosScreenSpace.x) + abs(0.5 - sunPosScreenSpace.y));
 
-    outColor = vec4(fragColor, 1.0);
+    outColor = fragColor;
 }
 

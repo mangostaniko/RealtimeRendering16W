@@ -61,8 +61,9 @@ bool renderShadowMap            = false;
 bool frustumCullingEnabled      = false;
 bool drawWireframe              = false;
 bool drawTransparent            = false;
+bool drawLightbeamsDebug        = false;
 
-Texture::FilterType filterType = Texture::LINEAR_MIPMAP_LINEAR;
+Texture::FilterType textureFilterMethod = Texture::LINEAR_MIPMAP_LINEAR;
 
 // uniform buffer object to share common uniform data between shaders
 // NOTE: it seems that on the gpu or opengl implementation the offsets
@@ -73,7 +74,7 @@ GLuint uboMatricesBlockSize = 256; //2 * sizeof(glm::mat4);
 GLuint uboViewAndCamBlockSize = 256; //5 * sizeof(glm::vec4);
 GLuint uboTotalSize = uboMatricesBlockSize + uboViewAndCamBlockSize;
 
-Shader *textureShader, *flatSingleColorShader;
+Shader *texturedBlinnPhongShader, *flatSingleColorShader;
 Shader *depthMapShader, *vsmDepthMapShader, *debugDepthShader, *blurVSMDepthShader; // shadow mapping
 Shader *activeShader;
 TextRenderer *textRenderer;
@@ -88,8 +89,8 @@ Geometry *island;
 Geometry *ocean;
 
 Light *sun; // sun start and end positions are linearly interpolated over time of day
-const glm::vec3 LIGHT_START(glm::vec3(-20, 150, 1000));
-const glm::vec3 LIGHT_END(glm::vec3(100, 150, 1000));
+const glm::vec3 LIGHT_START(glm::vec3(-20, 30, -100));
+const glm::vec3 LIGHT_END(glm::vec3(50, 30, -100));
 const float dayLength = 60;
 const float cameraFollowPathSpeed = 0.3f;
 
@@ -291,8 +292,8 @@ void init(GLFWwindow *window)
 
 	// INIT SHADERS
 	flatSingleColorShader = new Shader("shaders/flat_singlecolor.vert", "shaders/flat_singlecolor.frag");
-	textureShader = new Shader("shaders/textured_blinnphong.vert", "shaders/textured_blinnphong.frag");
-	setActiveShader(textureShader); // non-trivial cost
+	texturedBlinnPhongShader = new Shader("shaders/textured_blinnphong.vert", "shaders/textured_blinnphong.frag");
+	setActiveShader(texturedBlinnPhongShader); // non-trivial cost
 
 	// INIT UNIFORM BUFFER OBJECT
 	// For often reused uniform data (viewMat, ProjMat, lightData, etc.).
@@ -334,7 +335,7 @@ void init(GLFWwindow *window)
 	// uvAttribIndex         = 2;
 
 	// INIT WORLD + OBJECTS
-	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), LIGHT_END, glm::vec3(1.f, 0.89f, 0.6f), glm::vec3(0.87f, 0.53f, 0.f), dayLength);
+	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), "data/models/sphere.dae", LIGHT_END, dayLength);
 	island = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/island/island.dae");
 	ocean = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/water/water.dae");
 
@@ -511,7 +512,7 @@ void draw()
 		shadowPrepass(lightVPMat);
 
 		// set uniforms for shadow mapping in default textureShader
-		setActiveShader(textureShader);
+		setActiveShader(texturedBlinnPhongShader);
 		glUniformMatrix4fv(activeShader->getUniformLocation("lightVPMat"), 1, GL_FALSE, glm::value_ptr(lightVPMat));
 		glUniform1i(activeShader->getUniformLocation("shadowMap"), 1); // bind tex unit 0 to tex location 0 of blinn phong shader
 		glActiveTexture(GL_TEXTURE0 + 1);
@@ -547,7 +548,7 @@ void draw()
 
 void shadowPrepass(glm::mat4 &lightViewPro)
 {
-	setActiveShader(textureShader);
+	setActiveShader(texturedBlinnPhongShader);
 
 	// Calculate Light View-Projection Matrix
 	glm::mat4 lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, SM_NEAR_PLANE, SM_FAR_PLANE);
@@ -609,7 +610,7 @@ void vsmBlurPass()
 
 void waterPrepass()
 {
-	setActiveShader(textureShader);
+	setActiveShader(texturedBlinnPhongShader);
 
 	// GENERATE REFLECTION TEXTURE
 	// render all geometry above the water surface
@@ -645,10 +646,14 @@ void lightbeamsPrepass()
 	setActiveShader(flatSingleColorShader);
 
 	lightbeamsEffect->bindOcclusionFrameBuffer();
-	glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.0f);
+	glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUniform3f(activeShader->getUniformLocation("color"), 0.0f, 0.0f, 0.0f);
 	drawGeometry();
+
+	// draw light source geometry in white
+	glUniform3f(activeShader->getUniformLocation("color"), 1.0f, 1.0f, 1.0f);
+	sun->draw(activeShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
 
 	lightbeamsEffect->bindDefaultFrameBuffer();
 }
@@ -678,12 +683,13 @@ void ssaoPrepass()
 	if (ssaoBlurEnabled)
 		ssaoEffect->blurSSAOResultTexture();
 
-	setActiveShader(textureShader);
+	setActiveShader(texturedBlinnPhongShader);
 
 }
 
 void drawGeometry()
 {
+
 	//////////////////////////////////////////////////
 	/// DEFAULT ACTIVE SHADER TEXTURED BLINN-PHONG
 	//////////////////////////////////////////////////
@@ -699,21 +705,22 @@ void drawGeometry()
 	// we need to disable back face culling for palm leaves which are not closed meshes
 	glDisable(GL_CULL_FACE);
 	glUniform1f(activeShader->getUniformLocation("material.shininess"), 64.f);
-	island->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+	island->draw(activeShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
 	glEnable(GL_CULL_FACE);
 
 	glUniform1f(activeShader->getUniformLocation("material.shininess"), 32.f);
-	eagle->draw(activeShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+	eagle->draw(activeShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
 
 	if (drawWireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // disable wireframe
+
 }
 
 
 void drawWater()
 {
 	Shader *waterShader = waterEffect->setupWaterShader();
-	ocean->draw(waterShader, camera, frustumCullingEnabled, filterType, camera->getViewMat());
+	ocean->draw(waterShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
 	waterShader = nullptr;
 }
 
@@ -721,6 +728,8 @@ void drawLightbeams()
 {
 	glEnable(GL_BLEND); // blend result onto default framebuffer
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	if (drawLightbeamsDebug)
+		glBlendFunc(GL_ONE, GL_ZERO);
 
 	Shader *lightbeamsShader = lightbeamsEffect->setupLightbeamsShader(sun->getLocation(), camera->getProjMat()*camera->getViewMat());
 	drawScreenFillingQuad(); // draw whole screen with lightbeams shader
@@ -757,22 +766,29 @@ void drawText()
 
 void mainDrawPass()
 {
-	setActiveShader(textureShader);
+	setActiveShader(texturedBlinnPhongShader);
 
 	glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.f);
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUniform1i(activeShader->getUniformLocation("useShadows"), shadowsEnabled);
 	glUniform1i(activeShader->getUniformLocation("useSSAO"), ssaoEnabled);
 	glUniform1i(activeShader->getUniformLocation("useVSM"), vsmShadowsEnabled);
-	glUniform4f(activeShader->getUniformLocation("clippingPlane"), 0, 0, 0, 0); // no clipping
+	glUniform4f(activeShader->getUniformLocation("clippingPlane"), 0.0f, 0.0f, 0.0f, 0.0f); // no clipping
 
 	ssaoEffect->bindSSAOResultTexture(activeShader->getUniformLocation("ssaoTexture"), 2); // tex location 2 of blinn phong shader
 	drawGeometry();
 
+	// draw light source geometry
+	setActiveShader(flatSingleColorShader);
+	glUniform3f(activeShader->getUniformLocation("color"), 1.0f, 1.0f, 1.0f);
+	sun->draw(activeShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
+
 	drawWater();
 	
     drawLightbeams();
+
 }
 
 
@@ -831,7 +847,7 @@ void newGame()
 
 	glfwSetTime(0);
 
-	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), LIGHT_END, glm::vec3(1.f, 0.89f, 0.6f), glm::vec3(0.87f, 0.53f, 0.f), dayLength);
+	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), "data/models/sphere.dae", LIGHT_END, dayLength);
 
 	// RESET CAMERA
 	camera->setTransform(cameraInitTransform);
@@ -844,7 +860,7 @@ void newGame()
 
 void cleanup()
 {
-	delete textureShader; textureShader = nullptr;
+	delete texturedBlinnPhongShader; texturedBlinnPhongShader = nullptr;
 	delete flatSingleColorShader;
 	delete depthMapShader; depthMapShader = nullptr;
 	delete debugDepthShader; debugDepthShader = nullptr;
@@ -920,9 +936,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_F4) == GLFW_PRESS) {
-		filterType = static_cast<Texture::FilterType>((static_cast<int>(filterType)+3) % 6);
+		textureFilterMethod = static_cast<Texture::FilterType>((static_cast<int>(textureFilterMethod)+3) % 6);
 
-		switch (filterType) {
+		switch (textureFilterMethod) {
 			case Texture::NEAREST_MIPMAP_OFF:
 				std::cout << "TEXTURE FILTER NEAREST" << std::endl;
 				break;
@@ -945,10 +961,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
-		int filterTypeInt = static_cast<int>(filterType);
-		filterType = static_cast<Texture::FilterType>((static_cast<int>(filterType)+1) % 3 + (filterTypeInt/3)*3);
+		int filterTypeInt = static_cast<int>(textureFilterMethod);
+		textureFilterMethod = static_cast<Texture::FilterType>((static_cast<int>(textureFilterMethod)+1) % 3 + (filterTypeInt/3)*3);
 
-		switch (filterType) {
+		switch (textureFilterMethod) {
 			case Texture::NEAREST_MIPMAP_OFF:
 				std::cout << "MIPMAP OFF" << std::endl;
 				break;
@@ -971,12 +987,12 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_F6) == GLFW_PRESS) {
-		ssaoEnabled = !ssaoEnabled;
-		if (ssaoEnabled) {
-			std::cout << "SSAO ENABLED" << std::endl;
+		drawLightbeamsDebug = !drawLightbeamsDebug;
+		if (drawLightbeamsDebug) {
+			std::cout << "DRAW LIGHTBEAMS DEBUG ENABLED" << std::endl;
 		}
 		else {
-			std::cout << "SSAO DISABLED" << std::endl;
+			std::cout << "DRAW LIGHTBEAMS DEBUG DISABLED" << std::endl;
 		}
 	}
 

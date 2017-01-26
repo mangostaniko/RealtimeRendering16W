@@ -51,13 +51,13 @@ private:
 
 	int windowWidth, windowHeight;
 
-	int numSamples          = 100;   // fixed number of samples between fragment and sun (higher means better quality).
-	float sampleDensityBias = 1.00f; // if 1 we reach sun in numSamples. if < 1 sampling will be denser but end before reaching the sun
-	float sampleWeight      = 0.20f; // intensity contribution of each sample (higher means brighter)
-	float decayFactor       = 0.93f; // how contribution decays with distance to fragment (lower means shorter light beams)
-	float exposure          = 0.20f; // total intensity contribution (higher means brighter)
+	int numSamples          = 100;    // fixed number of samples between fragment and sun (higher means better quality).
+	float sampleDensityBias = 0.85f; // if 1 we reach sun in numSamples. if < 1 sampling will be denser but end before reaching the sun
+	float sampleWeight      = 5.00f; // intensity contribution of each sample (higher means brighter)
+	float decayFactor       = 0.98f; // how contribution decays with distance to fragment (lower means shorter light beams)
+	float exposure          = 0.0035f; // total intensity contribution (higher means brighter)
 
-	GLuint fboOccludedSky, occludedSkyColorTexture;
+	GLuint fboOccludedSky, occludedSkyColorTexture, occludedSkyDepthBuffer;
 
 	Shader *lightbeamsShader = nullptr;
 

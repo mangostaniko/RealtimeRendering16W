@@ -1,16 +1,16 @@
 #include "light.h"
 
 
-Light::Light(const glm::mat4 &modelMatrix_, glm::vec3 endPos, glm::vec3 startCol, glm::vec3 endCol, float cycleDuration_)
-    : SceneObject(modelMatrix_)
+Light::Light(const glm::mat4 &modelMatrix_, const std::string &geometryFilePath, glm::vec3 endPos, float cycleDuration_)
+    : Geometry(modelMatrix_, geometryFilePath)
     , endPosition(endPos)
-    , startColor(startCol)
-    , endColor(endCol)
-    , currentColor(startCol)
     , cycleDuration(cycleDuration_)
     , timePassed(0.f)
-    , noonColor(0.51f, 0.74f, 0.96f)
-    , nightColor(0.2f, 0.2f, 0.4f)
+    , nightColor  (0.1f, 0.1f, 0.2f)
+    , morningColor(0.4f, 0.5f, 0.6f)
+    , noonColor   (0.7f, 0.7f, 0.5f)
+    , eveningColor(0.6f, 0.2f, 0.0f)
+    , currentColor(nightColor)
 {
     startPosition = getLocation();
     direction = glm::normalize(endPosition - getLocation());
@@ -30,24 +30,24 @@ void Light::update(float timeDelta)
         Color and Position are interpolated according to time passed, Position has to be reset to start 
         at Midnight
     */
-    if (dayTime == 0) {
-        currentColor = startColor * (1.f - t) + t * noonColor;
+	if (dayTime == MORNING) {
+		currentColor = morningColor * (1.f - t) + t * noonColor;
 
         if (timePassed > daySectionDuration) {
             timePassed = 0.f;
             dayTime = AFTERNOON;
         }
     }
-    else if (dayTime == 1) {
-        currentColor = noonColor * (1.f - t) + t * endColor;
+	else if (dayTime == AFTERNOON) {
+		currentColor = noonColor * (1.f - t) + t * eveningColor;
 
         if (timePassed > daySectionDuration) {
             timePassed = 0.f;
             dayTime = EVENING;
         }
     }
-    else if (dayTime == 2) {
-        currentColor = endColor * (1.f - t) + t * nightColor;
+	else if (dayTime == EVENING) {
+		currentColor = eveningColor * (1.f - t) + t * nightColor;
         
         if (timePassed > daySectionDuration) {
             timePassed = 0.f;
@@ -55,8 +55,8 @@ void Light::update(float timeDelta)
             setLocation(startPosition);
         }
     }
-    else if (dayTime == 3) {
-        currentColor = nightColor * (1.f - t) + t * startColor;
+	else if (dayTime == NIGHT) {
+		currentColor = nightColor * (1.f - t) + t * morningColor;
 
         if (timePassed > daySectionDuration) {
             timePassed = 0.f;
