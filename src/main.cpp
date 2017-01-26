@@ -261,12 +261,6 @@ void init(GLFWwindow *window)
 	// thus we dont need to do manual gamma correction in fragment shader.
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
-	// alpha blending for textures with alpha channel
-	// NOTE disabled, since proper alpha blending requires that triangles are drawn from back to front
-	// since depth buffer rejects fragments of greater depth once we already have a closer value
-	// but we need all the color values of the fragments for blending.
-	//glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	// Enable clipping plane 0 for vertex clipping, to limit rendering to parts of scene.
 	// this is set individually in each vertex shader via gl_ClipDistance[0].
 	// plane is defined as oriented distance from origin, via a normalized direction vector and a distance.
@@ -765,6 +759,9 @@ void drawText()
 {
 	glDisable(GL_DEPTH_TEST);
 
+	glEnable(GL_BLEND); // blend result onto default framebuffer
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	if (debugInfoEnabled) {
 
 		int startY = 400;
@@ -782,6 +779,8 @@ void drawText()
 	if (paused) {
 		textRenderer->renderText("PAUSED", 25.0f, 150.0f, 0.7f, glm::vec3(1.0f, 0.35f, 0.7f));
 	}
+
+	glDisable(GL_BLEND);
 
 	glEnable(GL_DEPTH_TEST);
 }
