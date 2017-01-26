@@ -23,6 +23,7 @@
 #include "effects/ssao_effect.h"
 #include "effects/water_effect.h"
 #include "effects/lightbeams_effect.h"
+#include "effects/particlesystem.h"
 
 void init(GLFWwindow *window);
 void initSM();
@@ -35,7 +36,7 @@ void debugShadowPass();
 void ssaoPrepass();
 void waterPrepass();
 void lightbeamsPrepass();
-void mainDrawPass();
+void mainGeometryDrawPass();
 void update(float timeDelta);
 void draw();
 void setActiveShader(Shader *shader);
@@ -81,11 +82,14 @@ TextRenderer *textRenderer;
 SSAOEffect *ssaoEffect;
 WaterEffect *waterEffect;
 LightbeamsEffect *lightbeamsEffect;
+ParticleSystem *particlesFire;
+ParticleSystem *particlesSmoke;
 
 Camera *camera; glm::mat4 cameraInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, 50)));
 
 Eagle *eagle; glm::mat4 eagleInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 30, -45)));
 Geometry *island;
+Geometry *campfire;
 Geometry *ocean;
 
 Light *sun; // sun start and end positions are linearly interpolated over time of day
@@ -290,6 +294,13 @@ void init(GLFWwindow *window)
 	waterEffect = new WaterEffect(width, height, 0.5f, 0.8f, "data/models/water/waterDistortionDuDv.png", 0.02f, 0.03f);
 	lightbeamsEffect = new LightbeamsEffect(width, height);
 
+	// INIT PARTICLES
+	// maxParticleCount, spawnRate (per second), timeToLive (seconds), gravity
+	particlesFire = new ParticleSystem(glm::mat4(1.0f), "../data/particles/smoke.png", 30000, 20.f, 3.f, -0.10f);
+	particlesFire->respawn(glm::vec3(0.0f, 7.3f, 0.0f));
+	particlesSmoke = new ParticleSystem(glm::mat4(1.0f), "../data/particles/smoke.png", 3000, 10.f, 15.f, -0.10f);
+	particlesSmoke->respawn(glm::vec3(0.0f, 10.0f, 0.0f));
+
 	// INIT SHADERS
 	flatSingleColorShader = new Shader("shaders/flat_singlecolor.vert", "shaders/flat_singlecolor.frag");
 	texturedBlinnPhongShader = new Shader("shaders/textured_blinnphong.vert", "shaders/textured_blinnphong.frag");
@@ -337,6 +348,7 @@ void init(GLFWwindow *window)
 	// INIT WORLD + OBJECTS
 	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), "data/models/sphere.dae", LIGHT_END, dayLength);
 	island = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/island/island.dae");
+	campfire = new Geometry(glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.3, 1.2, 1.3)), glm::vec3(0, 5.7f, 0)), "data/models/campfire/campfire.dae");
 	ocean = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/water/water.dae");
 
 	// INIT CAMERA
@@ -467,16 +479,19 @@ void update(float timeDelta)
 {
 	camera->update(timeDelta, cameraFollowPathSpeed);
 
+	sun->update(timeDelta);
+
 	eagle->update(timeDelta, camera->getLocation() + glm::vec3(0, 2, 0), true, false);
 
-	sun->update(timeDelta);
-	//std::cout << sun->getLocation().x << " " << sun->getLocation().y << " " << sun->getLocation().z << " " << std::endl;
+	particlesFire->update(timeDelta, camera->getViewMat());
+	particlesSmoke->update(timeDelta, camera->getViewMat());
 
 	waterEffect->updateWaves(timeDelta);
 
 	///////////////////////////////////////////////////////////
 	//// SET SHARED UNIFORM DATA VIA UNIFORM BUFFER OBJECT ////
 	///////////////////////////////////////////////////////////
+
 	glBindBuffer(GL_UNIFORM_BUFFER, commonShaderUniformsUBO);
 
 	GLint m4sz = sizeof(glm::mat4);
@@ -531,7 +546,13 @@ void draw()
 	////////////////////////////////////
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	mainDrawPass();
+
+	// draw geometry that depends on depth test
+	mainGeometryDrawPass();
+
+	// draw screenspace effects
+	drawWater();
+	drawLightbeams();
 
 	// draw shadow map for debugging
 	if (shadowsEnabled && renderShadowMap) {
@@ -708,6 +729,8 @@ void drawGeometry()
 	island->draw(activeShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
 	glEnable(GL_CULL_FACE);
 
+	campfire->draw(activeShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
+
 	glUniform1f(activeShader->getUniformLocation("material.shininess"), 32.f);
 	eagle->draw(activeShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
 
@@ -764,7 +787,7 @@ void drawText()
 }
 
 
-void mainDrawPass()
+void mainGeometryDrawPass()
 {
 	setActiveShader(texturedBlinnPhongShader);
 
@@ -785,9 +808,9 @@ void mainDrawPass()
 	glUniform3f(activeShader->getUniformLocation("color"), 1.0f, 1.0f, 1.0f);
 	sun->draw(activeShader, camera, frustumCullingEnabled, textureFilterMethod, camera->getViewMat());
 
-	drawWater();
-	
-    drawLightbeams();
+	// draw fireplace particles
+	particlesFire->draw(camera->getViewMat(), camera->getProjMat(), glm::vec3(0.4f, 0.25f, 0.2f)); // color
+	//particlesSmoke->draw(camera->getViewMat(), camera->getProjMat(), glm::vec3(0.1f, 0.1f, 0.1f)); // color
 
 }
 
@@ -843,10 +866,10 @@ void drawScreenFillingQuad()
 
 void newGame()
 {
-	delete sun;
 
 	glfwSetTime(0);
 
+	delete sun;
 	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), "data/models/sphere.dae", LIGHT_END, dayLength);
 
 	// RESET CAMERA
@@ -854,29 +877,35 @@ void newGame()
 	eagle->setTransform(eagleInitTransform);
 	eagle->resetEagle();
 
+	// RESPAWN PARTICLES
+	particlesFire->respawn(glm::vec3(0.0f, 7.3f, 0.0f));
+	particlesSmoke->respawn(glm::vec3(0.0f, 10.0f, 0.0f));
+
 	paused = false;
 }
 
 
 void cleanup()
 {
-	delete texturedBlinnPhongShader; texturedBlinnPhongShader = nullptr;
+	delete texturedBlinnPhongShader;
 	delete flatSingleColorShader;
-	delete depthMapShader; depthMapShader = nullptr;
-	delete debugDepthShader; debugDepthShader = nullptr;
-	delete vsmDepthMapShader; vsmDepthMapShader = nullptr;
-	delete blurVSMDepthShader; blurVSMDepthShader = nullptr;
-	activeShader = nullptr;
+	delete depthMapShader;
+	delete debugDepthShader;
+	delete vsmDepthMapShader;
+	delete blurVSMDepthShader;
 
-	delete textRenderer; textRenderer = nullptr;
-	delete ssaoEffect; ssaoEffect = nullptr;
-	delete waterEffect; waterEffect = nullptr;
+	delete textRenderer;
+	delete ssaoEffect;
+	delete waterEffect;
 	delete lightbeamsEffect;
+	delete particlesFire;
+	delete particlesSmoke;
 
-	delete camera; camera = nullptr;
-	delete eagle; eagle = nullptr;
-	delete island; island = nullptr;
-	delete ocean; ocean = nullptr;
+	delete camera;
+	delete eagle;
+	delete island;
+	delete campfire;
+	delete ocean;
 }
 
 

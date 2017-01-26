@@ -85,6 +85,7 @@ ParticleSystem::~ParticleSystem()
 
 void ParticleSystem::draw(const glm::mat4 &viewMat, const glm::mat4 &projMat, const glm::vec3 &color)
 {
+	glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	particleShader->useShader();
 
@@ -113,6 +114,7 @@ void ParticleSystem::draw(const glm::mat4 &viewMat, const glm::mat4 &projMat, co
 	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, particles.size()); // mode, first index, last index, instance count
 	glBindVertexArray(0);
 
+	glDisable(GL_BLEND);
 
 }
 
@@ -131,7 +133,8 @@ void ParticleSystem::update(float timeDelta, const glm::mat4 &viewMat)
 			if (particles.size() < maxParticleCount) {
 				std::shared_ptr<Particle> particle = std::make_shared<Particle>();
 				particle->timeToLive = timeToLive;
-				particle->velocity = glm::vec3(randomFloat()-0.2f, randomFloat(), randomFloat()-0.2f) * 3.0f; // simulate wind
+				particle->velocity = glm::vec3(0.2f, 0.0f, 0.2f) * 0.f; // wind
+				particle->velocity += glm::vec3(randomFloat(), randomFloat(), randomFloat()) * 1.f - glm::vec3(0.4f); // diffusion
 				particles.push_back(particle);
 			} else {
 				spawningPaused = true;
