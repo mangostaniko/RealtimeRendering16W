@@ -44,7 +44,7 @@ void main() {
     deltaTexCoord *= sampleDensityBias; // if 1 we reach sun in numSamples. if < 1 sampling will be denser but end before reaching the sun
     vec2 sampleTexCoord = texCoord;
 
-    vec4 fragColor = gl_FragColor;
+    vec4 fragColor = vec4(0.0);
     float illuminationDecay = 1.0;
 
     for (int i = 0; i < numSamples; ++i) { // fixed number of uniformly distanced samples
