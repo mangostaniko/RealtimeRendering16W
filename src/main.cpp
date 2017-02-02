@@ -64,6 +64,7 @@ bool frustumCullingEnabled      = false;
 bool drawWireframe              = false;
 bool drawTransparent            = false;
 bool drawLightbeamsDebug        = false;
+bool drawSkyboxEnabled                 = true;
 
 Texture::FilterType textureFilterMethod = Texture::LINEAR_MIPMAP_LINEAR;
 
@@ -291,13 +292,14 @@ void init(GLFWwindow *window)
 	lightbeamsEffect = new LightbeamsEffect(width, height);
 
 	// INIT SKYBOX
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	std::vector<const GLchar*> cubemapImgPaths;
 	cubemapImgPaths.push_back("data/skybox/right.tga");
 	cubemapImgPaths.push_back("data/skybox/left.tga");
 	cubemapImgPaths.push_back("data/skybox/top.tga");
 	cubemapImgPaths.push_back("data/skybox/bottom.tga");
-	cubemapImgPaths.push_back("data/skybox/back.tga");
 	cubemapImgPaths.push_back("data/skybox/front.tga");
+	cubemapImgPaths.push_back("data/skybox/back.tga");
 	skyboxEffect = new SkyboxEffect(cubemapImgPaths);
 
 	// INIT PARTICLES
@@ -553,6 +555,12 @@ void draw()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (drawSkyboxEnabled)
+		skyboxEffect->drawSkybox(camera->getViewMat(), camera->getProjMat());
+
 	// draw geometry that depends on depth test
 	mainGeometryDrawPass();
 
@@ -637,7 +645,6 @@ void vsmBlurPass()
 
 void waterPrepass()
 {
-	setActiveShader(texturedBlinnPhongShader);
 
 	// GENERATE REFLECTION TEXTURE
 	// render all geometry above the water surface
@@ -649,6 +656,9 @@ void waterPrepass()
 
 	// use camera to look in the reflected direction from the mirrored position under the water surface
 	glUniform2f(activeShader->getUniformLocation("useYMirroredCamera"), true, ocean->getLocation().y);
+	if (drawSkyboxEnabled)
+		skyboxEffect->drawSkybox(camera->getViewMat(), camera->getProjMat());
+	setActiveShader(texturedBlinnPhongShader);
 	drawGeometry();
 	glUniform2f(activeShader->getUniformLocation("useYMirroredCamera"), false, ocean->getLocation().y);
 
@@ -801,10 +811,6 @@ void drawText()
 void mainGeometryDrawPass()
 {
 	setActiveShader(texturedBlinnPhongShader);
-
-	glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.f);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUniform1i(activeShader->getUniformLocation("useShadows"), shadowsEnabled);
 	glUniform1i(activeShader->getUniformLocation("useSSAO"), ssaoEnabled);
@@ -1028,6 +1034,15 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_F6) == GLFW_PRESS) {
+		drawSkyboxEnabled = !drawSkyboxEnabled;
+		if (drawSkyboxEnabled) {
+			std::cout << "DRAW SKYBOX ENABLED" << std::endl;
+		} else {
+			std::cout << "DRAW SKYBOX DISABLED" << std::endl;
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_F7) == GLFW_PRESS) {
 		drawLightbeamsDebug = !drawLightbeamsDebug;
 		if (drawLightbeamsDebug) {
 			std::cout << "DRAW LIGHTBEAMS DEBUG ENABLED" << std::endl;
@@ -1037,7 +1052,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_F7) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_F8) == GLFW_PRESS) {
 		if (!shadowsEnabled) {
 			shadowsEnabled = !shadowsEnabled;
 			vsmShadowsEnabled = false;
@@ -1055,7 +1070,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_F8) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_PRESS) {
 		frustumCullingEnabled = !frustumCullingEnabled;
 		if (frustumCullingEnabled) {
 			std::cout << "VIEW FRUSTUM CULLING ENABLED" << std::endl;
@@ -1065,7 +1080,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_F10) == GLFW_PRESS) {
 		drawTransparent = !drawTransparent;
 		if (drawTransparent) {
 			std::cout << "TRANSPARENCY ENABLED" << std::endl;
