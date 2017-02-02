@@ -24,6 +24,7 @@
 #include "effects/water_effect.h"
 #include "effects/lightbeams_effect.h"
 #include "effects/particlesystem.h"
+#include "effects/skybox_effect.h"
 
 void init(GLFWwindow *window);
 void initSM();
@@ -84,6 +85,7 @@ WaterEffect *waterEffect;
 LightbeamsEffect *lightbeamsEffect;
 ParticleSystem *particlesFire;
 ParticleSystem *particlesSmoke;
+SkyboxEffect *skyboxEffect;
 
 Camera *camera; glm::mat4 cameraInitTransform(glm::translate(glm::mat4(1.0f), glm::vec3(0, 10, 50)));
 
@@ -899,6 +901,7 @@ void cleanup()
 	delete lightbeamsEffect;
 	delete particlesFire;
 	delete particlesSmoke;
+	delete skyboxEffect;
 
 	delete camera;
 	delete eagle;

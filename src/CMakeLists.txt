@@ -27,6 +27,8 @@ set(SRC_CLASSES
     eagle.h
     eagle.cpp
 
+    effects/skybox_effect.h
+    effects/skybox_effect.cpp
     effects/water_effect.h
     effects/water_effect.cpp
     effects/lightbeams_effect.h
@@ -46,6 +48,8 @@ set(SRC_SHADERS
     shaders/normal_mapping.vert
     shaders/normal_mapping.frag
 
+    shaders/skybox.vert
+    shaders/skybox.frag
     shaders/water.vert
     shaders/water.frag
     shaders/lightbeams.vert
