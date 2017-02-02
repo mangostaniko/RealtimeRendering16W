@@ -668,6 +668,9 @@ void waterPrepass()
 	glClearColor(sun->getColor().x, sun->getColor().y, sun->getColor().z, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUniform4f(activeShader->getUniformLocation("clippingPlane"), 0, 1, 0, -ocean->getLocation().y); // clip all above water
+	if (drawSkyboxEnabled)
+		skyboxEffect->drawSkybox(camera->getViewMat(), camera->getProjMat());
+	setActiveShader(texturedBlinnPhongShader);
 	drawGeometry();
 
 	waterEffect->bindDefaultFrameBuffer();
