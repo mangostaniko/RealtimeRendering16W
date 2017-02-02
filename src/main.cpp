@@ -290,11 +290,21 @@ void init(GLFWwindow *window)
 	waterEffect = new WaterEffect(width, height, 0.5f, 0.8f, "data/models/water/waterDistortionDuDv.png", 0.02f, 0.03f);
 	lightbeamsEffect = new LightbeamsEffect(width, height);
 
+	// INIT SKYBOX
+	std::vector<const GLchar*> cubemapImgPaths;
+	cubemapImgPaths.push_back("data/skybox/right.tga");
+	cubemapImgPaths.push_back("data/skybox/left.tga");
+	cubemapImgPaths.push_back("data/skybox/top.tga");
+	cubemapImgPaths.push_back("data/skybox/bottom.tga");
+	cubemapImgPaths.push_back("data/skybox/back.tga");
+	cubemapImgPaths.push_back("data/skybox/front.tga");
+	skyboxEffect = new SkyboxEffect(cubemapImgPaths);
+
 	// INIT PARTICLES
 	// maxParticleCount, spawnRate (per second), timeToLive (seconds), gravity
-	particlesFire = new ParticleSystem(glm::mat4(1.0f), "../data/particles/smoke.png", 30000, 20.f, 3.f, -0.10f);
+	particlesFire = new ParticleSystem(glm::mat4(1.0f), "data/particles/smoke.png", 30000, 20.f, 3.f, -0.10f);
 	particlesFire->respawn(glm::vec3(0.0f, 7.3f, 0.0f));
-	particlesSmoke = new ParticleSystem(glm::mat4(1.0f), "../data/particles/smoke.png", 3000, 10.f, 15.f, -0.10f);
+	particlesSmoke = new ParticleSystem(glm::mat4(1.0f), "data/particles/smoke.png", 3000, 10.f, 15.f, -0.10f);
 	particlesSmoke->respawn(glm::vec3(0.0f, 10.0f, 0.0f));
 
 	// INIT SHADERS
