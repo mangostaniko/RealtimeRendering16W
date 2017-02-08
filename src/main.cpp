@@ -64,7 +64,8 @@ bool frustumCullingEnabled      = false;
 bool drawWireframe              = false;
 bool drawTransparent            = false;
 bool drawLightbeamsDebug        = false;
-bool drawSkyboxEnabled                 = true;
+bool drawSkyboxEnabled          = true;
+bool sunColorChangeEnabled      = true;
 
 Texture::FilterType textureFilterMethod = Texture::LINEAR_MIPMAP_LINEAR;
 
@@ -487,7 +488,7 @@ void update(float timeDelta)
 {
 	camera->update(timeDelta, cameraFollowPathSpeed);
 
-	sun->update(timeDelta);
+	sun->update(timeDelta, sunColorChangeEnabled);
 
 	eagle->update(timeDelta, camera->getLocation() + glm::vec3(0, 2, 0), true, false);
 
@@ -1037,6 +1038,15 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_F6) == GLFW_PRESS) {
+		sunColorChangeEnabled = !sunColorChangeEnabled;
+		if (sunColorChangeEnabled) {
+			std::cout << "SUN DAYTIME COLOR CHANGE ENABLED" << std::endl;
+		} else {
+			std::cout << "SUN DAYTIME COLOR CHANGE ENABLED" << std::endl;
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_F7) == GLFW_PRESS) {
 		drawSkyboxEnabled = !drawSkyboxEnabled;
 		if (drawSkyboxEnabled) {
 			std::cout << "DRAW SKYBOX ENABLED" << std::endl;
@@ -1045,17 +1055,16 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_F7) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_F8) == GLFW_PRESS) {
 		drawLightbeamsDebug = !drawLightbeamsDebug;
 		if (drawLightbeamsDebug) {
 			std::cout << "DRAW LIGHTBEAMS DEBUG ENABLED" << std::endl;
-		}
-		else {
+		} else {
 			std::cout << "DRAW LIGHTBEAMS DEBUG DISABLED" << std::endl;
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_F8) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_PRESS) {
 		if (!shadowsEnabled) {
 			shadowsEnabled = !shadowsEnabled;
 			vsmShadowsEnabled = false;
@@ -1073,7 +1082,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_F9) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_F10) == GLFW_PRESS) {
 		frustumCullingEnabled = !frustumCullingEnabled;
 		if (frustumCullingEnabled) {
 			std::cout << "VIEW FRUSTUM CULLING ENABLED" << std::endl;
@@ -1083,6 +1092,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		}
 	}
 
+	/*
 	if (glfwGetKey(window, GLFW_KEY_F10) == GLFW_PRESS) {
 		drawTransparent = !drawTransparent;
 		if (drawTransparent) {
@@ -1091,7 +1101,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 		else {
 			std::cout << "TRANSPARENCY DISABLED" << std::endl;
 		}
-	}
+	}*/
 
 	if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
 		renderShadowMap = !renderShadowMap;

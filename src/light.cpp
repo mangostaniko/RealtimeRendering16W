@@ -18,7 +18,7 @@ Light::Light(const glm::mat4 &modelMatrix_, const std::string &geometryFilePath,
     dayTime = NIGHT;
 }
 
-void Light::update(float timeDelta)
+void Light::update(float timeDelta, bool enableColorChange)
 {
     timePassed += timeDelta;
 
@@ -30,39 +30,41 @@ void Light::update(float timeDelta)
         Color and Position are interpolated according to time passed, Position has to be reset to start 
         at Midnight
     */
-	if (dayTime == MORNING) {
-		currentColor = morningColor * (1.f - t) + t * noonColor;
+	if (enableColorChange) {
+		if (dayTime == MORNING) {
+			currentColor = morningColor * (1.f - t) + t * noonColor;
 
-        if (timePassed > daySectionDuration) {
-            timePassed = 0.f;
-            dayTime = AFTERNOON;
-        }
-    }
-	else if (dayTime == AFTERNOON) {
-		currentColor = noonColor * (1.f - t) + t * eveningColor;
+			if (timePassed > daySectionDuration) {
+				timePassed = 0.f;
+				dayTime = AFTERNOON;
+			}
+		}
+		else if (dayTime == AFTERNOON) {
+			currentColor = noonColor * (1.f - t) + t * eveningColor;
 
-        if (timePassed > daySectionDuration) {
-            timePassed = 0.f;
-            dayTime = EVENING;
-        }
-    }
-	else if (dayTime == EVENING) {
-		currentColor = eveningColor * (1.f - t) + t * nightColor;
-        
-        if (timePassed > daySectionDuration) {
-            timePassed = 0.f;
-            dayTime = NIGHT;
-            setLocation(startPosition);
-        }
-    }
-	else if (dayTime == NIGHT) {
-		currentColor = nightColor * (1.f - t) + t * morningColor;
+			if (timePassed > daySectionDuration) {
+				timePassed = 0.f;
+				dayTime = EVENING;
+			}
+		}
+		else if (dayTime == EVENING) {
+			currentColor = eveningColor * (1.f - t) + t * nightColor;
 
-        if (timePassed > daySectionDuration) {
-            timePassed = 0.f;
-            dayTime = MORNING;
-        }
-    }
+			if (timePassed > daySectionDuration) {
+				timePassed = 0.f;
+				dayTime = NIGHT;
+				setLocation(startPosition);
+			}
+		}
+		else if (dayTime == NIGHT) {
+			currentColor = nightColor * (1.f - t) + t * morningColor;
+
+			if (timePassed > daySectionDuration) {
+				timePassed = 0.f;
+				dayTime = MORNING;
+			}
+		}
+	}
 
     t = timeDelta / (daySectionDuration * 2.f);
     glm::vec3 transDist = direction * (distance * t);

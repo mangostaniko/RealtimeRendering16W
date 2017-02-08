@@ -13,9 +13,8 @@ public:
 	Light(const glm::mat4 &modelMatrix_, const std::string &geometryFilePath, glm::vec3 endPos, float cycleDuration_);
 
     //! update the state of the Light
-    virtual void update(
-        float timeDelta //!< [in] time passed since the last frame in seconds
-	);
+    virtual void update(float timeDelta //!< [in] time passed since the last frame in seconds
+	, bool enableColorChange);
 
     //! Returns the current color as calculated
     glm::vec3 getColor() const;
