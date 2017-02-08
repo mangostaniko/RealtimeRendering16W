@@ -13,7 +13,7 @@
 #include "../shader.h"
 
 /// SkyboxEffect
-/// This is used to TODO
+/// This is used to draw a skybox using a cubemap texture
 class SkyboxEffect
 {
 
