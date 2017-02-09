@@ -10,7 +10,7 @@
 class Light : public Geometry
 {
 public:
-	Light(const glm::mat4 &modelMatrix_, const std::string &geometryFilePath, glm::vec3 endPos, float cycleDuration_);
+	Light(const glm::mat4 &modelMatrix_, const std::string &geometryFilePath, glm::vec3 endPos, float cycleDuration_, float startTime_);
 
     //! update the state of the Light
     virtual void update(float timeDelta //!< [in] time passed since the last frame in seconds

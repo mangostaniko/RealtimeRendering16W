@@ -1,11 +1,11 @@
 #include "light.h"
 
 
-Light::Light(const glm::mat4 &modelMatrix_, const std::string &geometryFilePath, glm::vec3 endPos, float cycleDuration_)
+Light::Light(const glm::mat4 &modelMatrix_, const std::string &geometryFilePath, glm::vec3 endPos, float cycleDuration_, float startTime)
     : Geometry(modelMatrix_, geometryFilePath)
     , endPosition(endPos)
     , cycleDuration(cycleDuration_)
-    , timePassed(0.f)
+    , timePassed(startTime)
     , nightColor  (0.1f, 0.1f, 0.2f)
     , morningColor(0.4f, 0.5f, 0.6f)
     , noonColor   (0.7f, 0.7f, 0.5f)

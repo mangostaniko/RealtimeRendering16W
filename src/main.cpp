@@ -355,7 +355,7 @@ void init(GLFWwindow *window)
 	// uvAttribIndex         = 2;
 
 	// INIT WORLD + OBJECTS
-	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), "data/models/sphere.dae", LIGHT_END, dayLength);
+	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), "data/models/sphere.dae", LIGHT_END, dayLength, dayLength/2.0f); // start after noon have nicer sky colors at start;
 	island = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/island/island.dae");
 	campfire = new Geometry(glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(1.3, 1.2, 1.3)), glm::vec3(0, 5.7f, 0)), "data/models/campfire/campfire.dae");
 	ocean = new Geometry(glm::scale(glm::mat4(1.0f), glm::vec3(1, 1, 1)), "data/models/water/water.dae");
@@ -891,7 +891,7 @@ void newGame()
 	glfwSetTime(0);
 
 	delete sun;
-	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), "data/models/sphere.dae", LIGHT_END, dayLength);
+	sun = new Light(glm::translate(glm::mat4(1.0f), LIGHT_START), "data/models/sphere.dae", LIGHT_END, dayLength, 0.0f);
 
 	// RESET CAMERA
 	camera->setTransform(cameraInitTransform);
