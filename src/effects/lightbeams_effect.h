@@ -22,13 +22,11 @@
 /// Along a light beam, photons may enter towards us via scattering or leave in other directions.
 /// Usually since our direction is just one of many possible scatter directions,
 /// scattering will mostly lead to decay of perceived light intensity with distance from sun.
-
-/// To simulate this,
-/// we let each fragment have sky color depending on how much non occluded fragments where closer to the sun,
-/// since each nonoccluded fragment could scatter to our occluded on which could then scatter towards us,
-/// but fragments after occluded fragments away from sun shouldnt be much brighter to roughly simulate volumetric shadow.
-/// Visually this may look like a radial blur, i.e. a smearing of colors radially outward around the sun:
-/// Sky colors will smear into occluded regions, occluded regions will smear (shadow) into non occluded regions.
+///
+/// To simulate this as a post process, in screen space from the sun outward
+/// we let sky colored fragments smear into occluded regions (simulate volumetric scattering),
+/// and occluded regions will smear into non occluded regions (simulate volumetric shadow).
+/// Visually this may look like a radial blur, i.e. a smearing of colors radially outward around the sun.
 ///
 /// In a PREPASS we render the whole screen to the occludedSkyColorTexture
 /// containing the colored sky with all geometry in front of it drawn black.
@@ -36,13 +34,14 @@
 /// In a POSTPASS we render the lightbeams which we can then blend with our default framebuffer.
 /// The Lightbeams Shader works as follows:
 /// For each fragment we sample the sky between it and the sun (fixed numSamples independent of distance)
-/// If the sky is clear take its sampled color, if it is occluded the sample is black.
-/// Each fragment receiveds the SUM of all these samples, sample contribution decays based on distance to fragment.
+/// If a sky sample is clear take its sampled color, if it is occluded the sample is black.
+/// Each fragment receives the SUM of all these samples, sample contribution decays based on distance to fragment.
 /// Color of a point on a light beam thus depends on how much of the lightbeam is occluded up to that point:
 /// If all is clear, we get a bright sky color at all points, that will fade due to decay. this will be like a bloom effect around the sun.
 /// If we have (sun)---xxxx--------> where x marks occluded parts,
 /// Then those occluded fragments x will still have some sky color from the nonoccluded fragments before.
-/// And the nonoccluded fragments after the occluded ones will have a bit less sky color due to "shadowing".
+/// And the nonoccluded fragments after the occluded ones will have a bit less sky color due to "shadowing"
+/// (less bright compared to the ones before, in total it will still be brighter as intensity only gets added up).
 ///
 class LightbeamsEffect
 {

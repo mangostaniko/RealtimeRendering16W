@@ -793,17 +793,17 @@ void drawText()
 		int startY = 400;
 		int deltaY = 20;
 		float fontSize = 0.35f;
-		textRenderer->renderText("drawn surface count: " + std::to_string(Geometry::drawnSurfaceCount), 25, startY+2*deltaY, fontSize, glm::vec3(1));
-		textRenderer->renderText("delta time: " + std::to_string(int(deltaT*1000 + 0.5)) + " ms", 25, startY+3*deltaY, fontSize, glm::vec3(1));
-		textRenderer->renderText("fps: " + std::to_string(int(1/deltaT + 0.5)), 25, startY+4*deltaY, fontSize, glm::vec3(1));
+		textRenderer->renderText("drawn surface count: " + std::to_string(Geometry::drawnSurfaceCount), 25, startY+2*deltaY, fontSize, glm::vec3(0.2));
+		textRenderer->renderText("delta time: " + std::to_string(int(deltaT*1000 + 0.5)) + " ms", 25, startY+3*deltaY, fontSize, glm::vec3(0.2));
+		textRenderer->renderText("fps: " + std::to_string(int(1/deltaT + 0.5)), 25, startY+4*deltaY, fontSize, glm::vec3(0.2));
 
 		if (!paused) {
-			textRenderer->renderText("time until end of day: " + std::to_string(int(dayLength - glfwGetTime())), 25.0f, startY+6*deltaY, fontSize, glm::vec3(1));
+			textRenderer->renderText("time until end of day: " + std::to_string(int(dayLength - glfwGetTime())), 25.0f, startY+6*deltaY, fontSize, glm::vec3(0.2));
 		}
 	}
 
 	if (paused) {
-		textRenderer->renderText("PAUSED", 25.0f, 150.0f, 0.7f, glm::vec3(1.0f, 0.35f, 0.7f));
+		textRenderer->renderText("PAUSED", 25.0f, 150.0f, 0.7f, glm::vec3(0.2));
 	}
 
 	glDisable(GL_BLEND);
